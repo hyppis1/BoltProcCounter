@@ -42,21 +42,21 @@ public class RubyCounterOverlay extends OverlayPanel
             if (!plugin.soundMuted)
             {
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Attacks: " + plugin.attackCounter)
+                        .left("Attacks:  " + plugin.attackCounter)
                         .build());
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Procs: " + plugin.rubyCounter)
+                        .left("Procs:  " + plugin.rubyCounter)
                         .build());
 
                 if (config.EnableSinceLastRuby())
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Since last proc: " + plugin.attacksSinceLastRuby)
+                            .left("Since last proc:  " + plugin.attacksSinceLastRuby)
                             .build());
                 }
 
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Rate: " + plugin.rate + "%")
+                        .left("Rate:  " + plugin.rate + "%")
                         .build());
 
                 if (config.AcbOverlay())
@@ -65,10 +65,10 @@ public class RubyCounterOverlay extends OverlayPanel
                             .left("----------")
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Acb specs: " + plugin.acbSpecsUsed)
+                            .left("Acb specs:  " + plugin.acbSpecsUsed)
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Acb procs: " + plugin.acbSpecsProcs)
+                            .left("Acb procs:  " + plugin.acbSpecsProcs)
                             .build());
                 }
 
@@ -78,17 +78,17 @@ public class RubyCounterOverlay extends OverlayPanel
                             .left("----------")
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Zcb specs: " + plugin.zcbSpecsUsed)
+                            .left("Zcb specs:  " + plugin.zcbSpecsUsed)
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Zcb procs: " + plugin.zcbSpecsProcs)
+                            .left("Zcb procs:  " + plugin.zcbSpecsProcs)
                             .build());
                 }
             }
             else
             {
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Sound effects must be enabled to track ruby bolt procs")
+                        .left("Sound effects must be enabled to track ruby bolt procs. Can be at 1%")
                         .build());
             }
         }
