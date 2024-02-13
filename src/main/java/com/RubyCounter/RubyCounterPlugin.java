@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Ruby-Counter"
+	name = "Ruby counter"
 )
 public class RubyCounterPlugin extends Plugin
 {
