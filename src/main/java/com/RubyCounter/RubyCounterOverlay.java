@@ -42,21 +42,25 @@ public class RubyCounterOverlay extends OverlayPanel
             if (!plugin.soundMuted)
             {
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Attacks:  " + plugin.attackCounter)
+                        .left("Attacks: ")
+                        .right(String.valueOf(plugin.attackCounter))
                         .build());
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Procs:  " + plugin.rubyCounter)
+                        .left("Procs: ")
+                        .right(String.valueOf(plugin.rubyCounter))
                         .build());
 
                 if (config.EnableSinceLastRuby())
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Since last proc:  " + plugin.attacksSinceLastRuby)
+                            .left("Since last proc: ")
+                            .right(String.valueOf(plugin.attacksSinceLastRuby))
                             .build());
                 }
 
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Rate:  " + plugin.rate + "%")
+                        .left("Rate: ")
+                        .right(plugin.rate + "%")
                         .build());
 
                 if (config.AcbOverlay())
@@ -65,10 +69,12 @@ public class RubyCounterOverlay extends OverlayPanel
                             .left("----------")
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Acb specs:  " + plugin.acbSpecsUsed)
+                            .left("Acb specs: ")
+                            .right(String.valueOf(plugin.acbSpecsUsed))
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Acb procs:  " + plugin.acbSpecsProcs)
+                            .left("Acb procs: ")
+                            .right(String.valueOf(plugin.acbSpecsProcs))
                             .build());
                 }
 
@@ -78,10 +84,12 @@ public class RubyCounterOverlay extends OverlayPanel
                             .left("----------")
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Zcb specs:  " + plugin.zcbSpecsUsed)
+                            .left("Zcb specs: ")
+                            .right(String.valueOf(plugin.zcbSpecsUsed))
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Zcb procs:  " + plugin.zcbSpecsProcs)
+                            .left("Zcb procs: ")
+                            .right(String.valueOf(plugin.zcbSpecsProcs))
                             .build());
                 }
             }
