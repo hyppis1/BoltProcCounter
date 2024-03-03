@@ -44,12 +44,15 @@ public class RubyCounterPlugin extends Plugin
 
 	public int attackCounter = 0; // Counter to track attacks
 	public int attacksSinceLastRuby = 0; // Counter to track attacks since last ruby
+	public double rubyDryRate = 0.0; // Counter to track ruby proc dryness chance
+	public int longestDryStreak = 0; // Counter to track dry streak
 	public int rubyCounter = 0; // Counter to track ruby procs
 	public int acbSpecsUsed = 0; //counter to track acb spec uses
 	public int acbSpecsProcs = 0; // counter to track acb spec procs
 	public int zcbSpecsUsed = 0; //counter to track zcb spec uses
 	public int zcbSpecsProcs = 0; // counter to track zcb spec procs
 	public double rate = 0.0;
+	public double expectedProcs = 0.0; // Counter to track expected ruby procs
 	private int eventSoundId;
 	private int specialPercentage = 0;
 
@@ -81,7 +84,10 @@ public class RubyCounterPlugin extends Plugin
 		{
 			attackCounter = 0;
 			rubyCounter = 0;
+			rubyDryRate = 0.0;
+			longestDryStreak = 0;
 			rate = 0.0;
+			expectedProcs = 0.0;
 			attacksSinceLastRuby = 0;
 			acbSpecsProcs = 0;
 			acbSpecsUsed = 0;
@@ -147,9 +153,34 @@ public class RubyCounterPlugin extends Plugin
 							{
 								// Increment the ruby counters
 								rubyCounter++;
+
+								if (attacksSinceLastRuby > longestDryStreak)
+								{
+									longestDryStreak = attacksSinceLastRuby;
+								}
 								// reset attacks since last ruby
 								attacksSinceLastRuby = 0;
 
+							}
+
+
+							if (config.KandarinHardDiary())
+							{
+								expectedProcs = attackCounter * 0.066;
+								expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
+
+								rubyDryRate = 1 - Math.pow(1 - 0.066, attacksSinceLastRuby);
+								rubyDryRate *= 100.0;
+								rubyDryRate = Double.parseDouble(new DecimalFormat("#.##").format(rubyDryRate));
+							}
+							else
+							{
+								expectedProcs = attackCounter * 0.06;
+								expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
+
+								rubyDryRate = 1 - Math.pow(1 - 0.06, attacksSinceLastRuby) ;
+								rubyDryRate *= 100.0;
+								rubyDryRate = Double.parseDouble(new DecimalFormat("#.##").format(rubyDryRate));
 							}
 
 							// calculate and format rate of ruby procs

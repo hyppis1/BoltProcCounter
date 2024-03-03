@@ -21,6 +21,17 @@ public interface RubyCounterConfig extends Config
 
     @ConfigItem(
             position = 2,
+            keyName = "ExpectedProcs",
+            name = "Expected proc rate",
+            description = "Shows expected ruby bolt proc rate"
+    )
+    default boolean ExpectedProcs()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            position = 3,
             keyName = "EnableSinceLastRuby",
             name = "Since last ruby",
             description = "Shows how many attacks since last ruby proc"
@@ -31,7 +42,40 @@ public interface RubyCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 3,
+            position = 4,
+            keyName = "RubyDryChance",
+            name = "Ruby dry chance",
+            description = "Shows chance of going x dry for ruby bolt proc"
+    )
+    default boolean RubyDryChance()
+    {
+        return false;
+    }
+    @ConfigItem(
+            position = 5,
+            keyName = "LongestDryStreak",
+            name = "Longest dry streak",
+            description = "Shows longest streak of no ruby bolt procs"
+    )
+    default boolean LongestDryStreak()
+    {
+        return false;
+    }
+
+
+    @ConfigItem(
+            position = 6,
+            keyName = "KandarinHardDiary",
+            name = "Kandarin hard diary",
+            description = "Check if Kandarin hard diary is completed (10% higher chance for bolts to proc)"
+    )
+    default boolean KandarinHardDiary()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            position = 7,
             keyName = "AcbTracking",
             name = "Separate Acb specs",
             description = "Separate Armadyl crossbow special attacks from normal attacks"
@@ -42,7 +86,7 @@ public interface RubyCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 4,
+            position = 8,
             keyName = "AcbOverlay",
             name = "Show separated Acb",
             description = "Shows separated Armadyl crossbow special attacks"
@@ -53,7 +97,7 @@ public interface RubyCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 5,
+            position = 9,
             keyName = "ZcbTracking",
             name = "Separate Zcb specs",
             description = "Separate Zaryte crossbow special attacks"
@@ -63,7 +107,7 @@ public interface RubyCounterConfig extends Config
         return true;
     }
     @ConfigItem(
-            position = 6,
+            position = 10,
             keyName = "ZcbOverlay",
             name = "Show separated Zcb",
             description = "Shows separated Zaryte crossbow special attacks"
@@ -75,7 +119,7 @@ public interface RubyCounterConfig extends Config
 
 
     @ConfigItem(
-            position = 7,
+            position = 11,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
             description = "Toggle to reset the counters"

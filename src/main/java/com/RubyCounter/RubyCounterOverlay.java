@@ -8,6 +8,7 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.config.ConfigManager;
 
 import java.awt.*;
+import java.awt.Color;
 
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
@@ -45,10 +46,32 @@ public class RubyCounterOverlay extends OverlayPanel
                         .left("Attacks: ")
                         .right(String.valueOf(plugin.attackCounter))
                         .build());
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Procs: ")
-                        .right(String.valueOf(plugin.rubyCounter))
-                        .build());
+
+                if (plugin.rubyCounter >= plugin.expectedProcs)
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Procs: ")
+                            .right(String.valueOf(plugin.rubyCounter))
+                            .rightColor(Color.GREEN)
+                            .build());
+                }
+                else
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Procs: ")
+                            .right(String.valueOf(plugin.rubyCounter))
+                            .rightColor(Color.RED)
+                            .build());
+                }
+
+
+                if (config.ExpectedProcs())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Expected: ")
+                            .right(String.valueOf(plugin.expectedProcs))
+                            .build());
+                }
 
                 if (config.EnableSinceLastRuby())
                 {
@@ -58,10 +81,64 @@ public class RubyCounterOverlay extends OverlayPanel
                             .build());
                 }
 
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Rate: ")
-                        .right(plugin.rate + "%")
-                        .build());
+                if (config.RubyDryChance())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Dry chance: ")
+                            .right(String.valueOf(plugin.rubyDryRate + "%"))
+                            .build());
+                }
+
+                if (config.LongestDryStreak())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Longest dry: ")
+                            .right(String.valueOf(plugin.longestDryStreak))
+                            .build());
+                }
+
+                if (config.KandarinHardDiary())
+                {
+                    if ((double) plugin.rubyCounter / plugin.attackCounter * 100 >= 6.6)
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("Rate: ")
+                                .right(plugin.rate + "%")
+                                .rightColor(Color.GREEN)
+                                .build());
+                    }
+                    else
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("Rate: ")
+                                .right(plugin.rate + "%")
+                                .rightColor(Color.RED)
+                                .build());
+                    }
+                }
+                else
+                {
+                    if ((double) plugin.rubyCounter / plugin.attackCounter * 100 >= 6)
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("Rate: ")
+                                .right(plugin.rate + "%")
+                                .rightColor(Color.GREEN)
+                                .build());
+                    }
+                    else
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("Rate: ")
+                                .right(plugin.rate + "%")
+                                .rightColor(Color.RED)
+                                .build());
+                    }
+                }
+
+
+
+
 
                 if (config.AcbOverlay())
                 {
