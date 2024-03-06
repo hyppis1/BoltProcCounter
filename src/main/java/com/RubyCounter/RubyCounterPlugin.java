@@ -53,8 +53,11 @@ public class RubyCounterPlugin extends Plugin
 	public int zcbSpecsProcs = 0; // counter to track zcb spec procs
 	public double rate = 0.0;
 	public double expectedProcs = 0.0; // Counter to track expected ruby procs
+
+	public double expectedRate = 0.06; // expected ruby proc rate
 	private int eventSoundId;
 	private int specialPercentage = 0;
+
 
     boolean acbSpecUsed = false;
 	boolean zcbSpecUsed = false;
@@ -105,6 +108,11 @@ public class RubyCounterPlugin extends Plugin
 		if (coolDownTicksRemaining > 0)
 		{
 			coolDownTicksRemaining--;
+		}
+
+		if (config.KandarinHardDiary())
+		{
+			expectedRate = 0.066;
 		}
 
 		if (localPlayer != null && coolDownTicksRemaining == 0)
@@ -163,25 +171,14 @@ public class RubyCounterPlugin extends Plugin
 
 							}
 
+							// calculate and format expected rate of ruby procs
+							expectedProcs = attackCounter * expectedRate;
+							expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
 
-							if (config.KandarinHardDiary())
-							{
-								expectedProcs = attackCounter * 0.066;
-								expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
-
-								rubyDryRate = 1 - Math.pow(1 - 0.066, attacksSinceLastRuby);
-								rubyDryRate *= 100.0;
-								rubyDryRate = Double.parseDouble(new DecimalFormat("#.##").format(rubyDryRate));
-							}
-							else
-							{
-								expectedProcs = attackCounter * 0.06;
-								expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
-
-								rubyDryRate = 1 - Math.pow(1 - 0.06, attacksSinceLastRuby) ;
-								rubyDryRate *= 100.0;
-								rubyDryRate = Double.parseDouble(new DecimalFormat("#.##").format(rubyDryRate));
-							}
+							// calculate and format ruby dry chance
+							rubyDryRate = 1 - Math.pow(1 - expectedRate, attacksSinceLastRuby);
+							rubyDryRate *= 100.0;
+							rubyDryRate = Double.parseDouble(new DecimalFormat("#.##").format(rubyDryRate));
 
 							// calculate and format rate of ruby procs
 							rate = (double) rubyCounter / attackCounter;

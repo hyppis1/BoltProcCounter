@@ -45,7 +45,7 @@ public interface RubyCounterConfig extends Config
             position = 4,
             keyName = "RubyDryChance",
             name = "Ruby dry chance",
-            description = "Shows chance of going x dry for ruby bolt proc"
+            description = "Shows chance of getting ruby bolt proc in last x attacks"
     )
     default boolean RubyDryChance()
     {
@@ -67,7 +67,7 @@ public interface RubyCounterConfig extends Config
             position = 6,
             keyName = "KandarinHardDiary",
             name = "Kandarin hard diary",
-            description = "Check if Kandarin hard diary is completed (10% higher chance for bolts to proc)"
+            description = "Check if Kandarin hard diary is completed (10% increased bolt proc chance)"
     )
     default boolean KandarinHardDiary()
     {

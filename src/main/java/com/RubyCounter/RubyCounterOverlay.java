@@ -47,22 +47,10 @@ public class RubyCounterOverlay extends OverlayPanel
                         .right(String.valueOf(plugin.attackCounter))
                         .build());
 
-                if (plugin.rubyCounter >= plugin.expectedProcs)
-                {
-                    panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Procs: ")
-                            .right(String.valueOf(plugin.rubyCounter))
-                            .rightColor(Color.GREEN)
-                            .build());
-                }
-                else
-                {
-                    panelComponent.getChildren().add(LineComponent.builder()
-                            .left("Procs: ")
-                            .right(String.valueOf(plugin.rubyCounter))
-                            .rightColor(Color.RED)
-                            .build());
-                }
+                panelComponent.getChildren().add(LineComponent.builder()
+                        .left("Procs: ")
+                        .right(String.valueOf(plugin.rubyCounter))
+                        .build());
 
 
                 if (config.ExpectedProcs())
@@ -97,47 +85,10 @@ public class RubyCounterOverlay extends OverlayPanel
                             .build());
                 }
 
-                if (config.KandarinHardDiary())
-                {
-                    if ((double) plugin.rubyCounter / plugin.attackCounter * 100 >= 6.6)
-                    {
-                        panelComponent.getChildren().add(LineComponent.builder()
-                                .left("Rate: ")
-                                .right(plugin.rate + "%")
-                                .rightColor(Color.GREEN)
-                                .build());
-                    }
-                    else
-                    {
-                        panelComponent.getChildren().add(LineComponent.builder()
-                                .left("Rate: ")
-                                .right(plugin.rate + "%")
-                                .rightColor(Color.RED)
-                                .build());
-                    }
-                }
-                else
-                {
-                    if ((double) plugin.rubyCounter / plugin.attackCounter * 100 >= 6)
-                    {
-                        panelComponent.getChildren().add(LineComponent.builder()
-                                .left("Rate: ")
-                                .right(plugin.rate + "%")
-                                .rightColor(Color.GREEN)
-                                .build());
-                    }
-                    else
-                    {
-                        panelComponent.getChildren().add(LineComponent.builder()
-                                .left("Rate: ")
-                                .right(plugin.rate + "%")
-                                .rightColor(Color.RED)
-                                .build());
-                    }
-                }
-
-
-
+                panelComponent.getChildren().add(LineComponent.builder()
+                        .left("Rate: ")
+                        .right(plugin.rate + "%")
+                        .build());
 
 
                 if (config.AcbOverlay())
