@@ -143,11 +143,11 @@ public class BoltProcCounterPlugin extends Plugin
 				expectedRate *= 1.1;
 			}
 
-			// 10% bonus from zcb
-			if (weaponId == ItemID.ZARYTE_CROSSBOW)
-			{
-				expectedRate *= 1.1;
-			}
+			// 10% bonus from zcb (assumed, remove comment if its correct)
+			// if (weaponId == ItemID.ZARYTE_CROSSBOW)
+			// {
+			//	expectedRate *= 1.1;
+			// }
 
 			// cool down ticks to not track multiple hits from single attack animation
 			if (coolDownTicksRemaining > 0)
