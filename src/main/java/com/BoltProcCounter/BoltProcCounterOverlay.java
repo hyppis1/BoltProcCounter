@@ -1,29 +1,27 @@
-package com.RubyCounter;
+package com.BoltProcCounter;
 
 import com.google.inject.Inject;
 import net.runelite.api.*;
-import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.ui.overlay.components.LineComponent;
-import net.runelite.client.config.ConfigManager;
 
 import java.awt.*;
-import java.awt.Color;
+import java.text.DecimalFormat;
 
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 
-public class RubyCounterOverlay extends OverlayPanel
+public class BoltProcCounterOverlay extends OverlayPanel
 {
 
     @Inject
-    private RubyCounterConfig config;
+    private BoltProcCounterConfig config;
     private final Client client;
-    private final RubyCounterPlugin plugin;
+    private final BoltProcCounterPlugin plugin;
 
 
     @Inject
-    private RubyCounterOverlay(RubyCounterPlugin plugin, Client client, RubyCounterConfig config)
+    private BoltProcCounterOverlay(BoltProcCounterPlugin plugin, Client client, BoltProcCounterConfig config)
     {
         super(plugin);
         this.client = client;
@@ -40,16 +38,28 @@ public class RubyCounterOverlay extends OverlayPanel
     {
         if (config.EnableOverLay())
         {
-            if (!plugin.soundMuted)
+            if (!plugin.soundMutedB2B)
             {
+                if (config.ShowBoltName())
+                {
+                    double formatedRate = plugin.expectedRate;
+                    formatedRate *= 100.0;
+                    formatedRate = Double.parseDouble(new DecimalFormat("#.##").format(formatedRate));
+
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left(plugin.ammoName)
+                            .right(formatedRate + "%")
+                            .build());
+                }
+
                 panelComponent.getChildren().add(LineComponent.builder()
                         .left("Attacks: ")
-                        .right(String.valueOf(plugin.attackCounter))
+                        .right(String.valueOf(plugin.attackCounterArray[plugin.wasAmmoIndex]))
                         .build());
 
                 panelComponent.getChildren().add(LineComponent.builder()
                         .left("Procs: ")
-                        .right(String.valueOf(plugin.rubyCounter))
+                        .right(String.valueOf(plugin.procCounterArray[plugin.wasAmmoIndex]))
                         .build());
 
 
@@ -65,15 +75,15 @@ public class RubyCounterOverlay extends OverlayPanel
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Since last proc: ")
-                            .right(String.valueOf(plugin.attacksSinceLastRuby))
+                            .right(String.valueOf(plugin.attacksSinceLastProcArray[plugin.wasAmmoIndex]))
                             .build());
                 }
 
-                if (config.RubyDryChance())
+                if (config.ProcDryChance())
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Dry chance: ")
-                            .right(String.valueOf(plugin.rubyDryRate + "%"))
+                            .right(String.valueOf(plugin.procDryRate + "%"))
                             .build());
                 }
 
@@ -81,7 +91,7 @@ public class RubyCounterOverlay extends OverlayPanel
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Longest dry: ")
-                            .right(String.valueOf(plugin.longestDryStreak))
+                            .right(String.valueOf(plugin.longestDryStreakArray[plugin.wasAmmoIndex]))
                             .build());
                 }
 
@@ -98,11 +108,11 @@ public class RubyCounterOverlay extends OverlayPanel
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Acb specs: ")
-                            .right(String.valueOf(plugin.acbSpecsUsed))
+                            .right(String.valueOf(plugin.acbSpecsUsedArray[plugin.wasAmmoIndex]))
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Acb procs: ")
-                            .right(String.valueOf(plugin.acbSpecsProcs))
+                            .right(String.valueOf(plugin.acbSpecsProcsArray[plugin.wasAmmoIndex]))
                             .build());
                 }
 
@@ -113,18 +123,18 @@ public class RubyCounterOverlay extends OverlayPanel
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Zcb specs: ")
-                            .right(String.valueOf(plugin.zcbSpecsUsed))
+                            .right(String.valueOf(plugin.zcbSpecsUsedArray[plugin.wasAmmoIndex]))
                             .build());
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Zcb procs: ")
-                            .right(String.valueOf(plugin.zcbSpecsProcs))
+                            .right(String.valueOf(plugin.zcbSpecsProcsArray[plugin.wasAmmoIndex]))
                             .build());
                 }
             }
             else
             {
                 panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Sound effects must be enabled to track ruby bolt procs. Can be at 1%")
+                        .left("Sound effects must be enabled to track bolt procs. Can be at 1%")
                         .build());
             }
         }
