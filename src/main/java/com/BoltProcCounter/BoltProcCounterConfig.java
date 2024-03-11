@@ -33,6 +33,17 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             position = 3,
+            keyName = "pvpRates",
+            name = "Use pvp proc rates",
+            description = "Enable if you are tracking bolt proc rates in pvp (different rates for some bolts procs compared to pvm)"
+    )
+    default boolean pvpRates()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            position = 4,
             keyName = "AcbTracking",
             name = "Separate Acb specs",
             description = "Separate Armadyl crossbow special attacks from normal attacks"
@@ -43,7 +54,7 @@ public interface BoltProcCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 4,
+            position = 5,
             keyName = "ZcbTracking",
             name = "Separate Zcb specs",
             description = "Separate Zaryte crossbow special attacks"
@@ -56,7 +67,7 @@ public interface BoltProcCounterConfig extends Config
     @ConfigSection(
             name = "Display data in overlay",
             description = "Configure what data you want to see on the overlay",
-            position = 5,
+            position = 6,
             closedByDefault = true
     )
     String ShownStatsSection = "ShownStats";
@@ -65,8 +76,8 @@ public interface BoltProcCounterConfig extends Config
             section = ShownStatsSection,
             position = 1,
             keyName = "ShowBoltName",
-            name = "Show equipped bolts",
-            description = "Shows equipped bolts in overlay"
+            name = "Equipped bolts info",
+            description = "Shows equipped bolts info in overlay"
     )
     default boolean ShowBoltName()
     {
@@ -146,7 +157,7 @@ public interface BoltProcCounterConfig extends Config
 
 
     @ConfigItem(
-            position = 5,
+            position = 7,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
             description = "Toggle to reset the counters for this bolt type"

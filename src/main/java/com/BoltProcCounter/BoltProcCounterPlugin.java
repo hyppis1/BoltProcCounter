@@ -21,7 +21,7 @@ import java.util.Objects;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Bolt proc counter"
+	name = "Bolt Proc Counter"
 )
 public class BoltProcCounterPlugin extends Plugin
 {
@@ -51,11 +51,11 @@ public class BoltProcCounterPlugin extends Plugin
 	public int[] zcbSpecsUsedArray = new int[10]; // counters to track zcb spec uses
 	public int[] zcbSpecsProcsArray = new int[10]; // counters to track zcb spec procs
 
-	public double procDryRate = 0.0; // Counter to track ruby proc dryness chance
+	public double procDryRate = 0.0; // Counter to track proc dryness chance
 	public double rate = 0.0;
-	public double expectedProcs = 0.0; // Counter to track expected ruby procs
+	public double expectedProcs = 0.0; // Counter to track expected  procs
 
-	public double expectedRate = 0.06; // expected ruby proc rate
+	public double expectedRate = 0.06; // expected proc rate
 	private int eventSoundId;
 	private int boltProcSoundId;
 	private int weaponId;
@@ -134,7 +134,7 @@ public class BoltProcCounterPlugin extends Plugin
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
 		{
-			// for overlay data to stay visible when equipping something else, stops flikering
+			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
 
 			// 10% bonus from kandarin hard diary
@@ -271,7 +271,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.OPAL_DRAGON_BOLTS_E:
 			case ItemID.OPAL_DRAGON_BOLTS_E_27192:
 				arrayIndex = 0;
-				expectedRate = 0.05;
+				expectedRate = 0.05; // same rate both pvm and pvp
 				boltProcSoundId = 2918;
 				ammoName = "Opal";
 				needAccuracyPass = false;
@@ -279,7 +279,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.JADE_BOLTS_E:
 			case ItemID.JADE_DRAGON_BOLTS_E:
 				arrayIndex = 1;
-				expectedRate = 0.06;
+				expectedRate = 0.06; // same rate both pvm and pvp and nobody will ever use these
 				// boltProcSoundId = ???;
 				ammoName = "Jade (not supported)";
 				needAccuracyPass = false;
@@ -287,7 +287,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.PEARL_BOLTS_E:
 			case ItemID.PEARL_DRAGON_BOLTS_E:
 				arrayIndex = 2;
-				expectedRate = 0.06;
+				expectedRate = 0.06; // same rate both pvm and pvp
 				boltProcSoundId = 2920;
 				ammoName = "Pearl";
 				needAccuracyPass = false;
@@ -295,7 +295,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.TOPAZ_BOLTS_E:
 			case ItemID.TOPAZ_DRAGON_BOLTS_E:
 				arrayIndex = 3;
-				expectedRate = 0.04;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.04;
+				}
+				else
+				{
+					expectedRate = 0.0;
+				}
 				boltProcSoundId = 2914;
 				ammoName = "Topaz";
 				needAccuracyPass = false;
@@ -303,7 +310,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.SAPPHIRE_BOLTS_E:
 			case ItemID.SAPPHIRE_DRAGON_BOLTS_E:
 				arrayIndex = 4;
-				expectedRate = 0.25;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.05;
+				}
+				else
+				{
+					expectedRate = 0.25;
+				}
 				boltProcSoundId = 2912;
 				ammoName = "Sapphire";
 				needAccuracyPass = true;
@@ -311,7 +325,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.EMERALD_BOLTS_E:
 			case ItemID.EMERALD_DRAGON_BOLTS_E:
 				arrayIndex = 5;
-				expectedRate = 0.55;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.54;
+				}
+				else
+				{
+					expectedRate = 0.55;
+				}
 				boltProcSoundId = 2919;
 				ammoName = "Emerald";
 				needAccuracyPass = true;
@@ -319,7 +340,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.RUBY_BOLTS_E:
 			case ItemID.RUBY_DRAGON_BOLTS_E:
 				arrayIndex = 6;
-				expectedRate = 0.06;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.11;
+				}
+				else
+				{
+					expectedRate = 0.06;
+				}
 				boltProcSoundId = 2911;
 				ammoName = "Ruby";
 				needAccuracyPass = false;
@@ -328,7 +356,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.DIAMOND_BOLTS_E_23649:
 			case ItemID.DIAMOND_DRAGON_BOLTS_E:
 				arrayIndex = 7;
-				expectedRate = 0.1;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.05;
+				}
+				else
+				{
+					expectedRate = 0.1;
+				}
 				boltProcSoundId = 2913;
 				ammoName = "Diamond";
 				needAccuracyPass = false;
@@ -336,7 +371,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.DRAGONSTONE_BOLTS_E:
 			case ItemID.DRAGONSTONE_DRAGON_BOLTS_E:
 				arrayIndex = 8;
-				expectedRate = 0.06;
+				expectedRate = 0.06; // same rate both pvm and pvp
 				boltProcSoundId = 2915;
 				ammoName = "Dragonstone";
 				needAccuracyPass = true;
@@ -344,7 +379,14 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.ONYX_BOLTS_E:
 			case ItemID.ONYX_DRAGON_BOLTS_E:
 				arrayIndex = 9;
-				expectedRate = 0.11;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.1;
+				}
+				else
+				{
+					expectedRate = 0.11;
+				}
 				boltProcSoundId = 2917;
 				ammoName = "Onyx";
 				needAccuracyPass = true;

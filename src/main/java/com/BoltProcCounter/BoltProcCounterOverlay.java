@@ -50,6 +50,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
                             .left(plugin.ammoName)
                             .right(formatedRate + "%")
                             .build());
+
                 }
 
                 panelComponent.getChildren().add(LineComponent.builder()
