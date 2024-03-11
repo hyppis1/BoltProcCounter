@@ -72,7 +72,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
                             .build());
                 }
 
-                if (config.EnableSinceLastRuby())
+                if (config.EnableSinceLastProc())
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Since last proc: ")

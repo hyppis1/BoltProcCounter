@@ -99,11 +99,11 @@ public interface BoltProcCounterConfig extends Config
     @ConfigItem(
             section = ShownStatsSection,
             position = 3,
-            keyName = "EnableSinceLastRuby",
+            keyName = "EnableSinceLastProc",
             name = "Since last proc",
             description = "Shows how many attacks since last bolt proc"
     )
-    default boolean EnableSinceLastRuby()
+    default boolean EnableSinceLastProc()
     {
         return true;
     }
