@@ -8,7 +8,8 @@ For bolts effects that dont bypass accuracy check, the plugin assumes 100% accur
 
 ## Data saving
 
-Plugin saves data in .txt files with corresponding bolt name. For example Ruby.txt file contains data for ruby bolt tracking. Saved data would look like this "27;5;13;3;0;0;0;0". 
+Data is saved in .txt files with corresponding bolt name. For example Ruby.txt file contains data for ruby bolt tracking.
+Saved data would look like this "27;5;13;3;0;0;0;0". 
 This example data is "Attacks: 27, Since last proc: 5, Longest dry: 13, Procs: 3, Acb specs: 0, Acb procs: 0, Zcb specs: 0 Zcb procs: 0".
 
 Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"bolt type".txt
