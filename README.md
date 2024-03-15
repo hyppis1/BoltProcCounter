@@ -6,7 +6,7 @@ You must have sounds enabled for the plugin to track ruby bolt procs.
 
 For bolts effects that dont bypass accuracy check, the plugin assumes 100% accuracy for expected rates tracking.
 
-## Data saving
+**Data saving**
 
 Data is saved in .txt files with corresponding bolt name. For example Ruby.txt file contains data for ruby bolt tracking.
 
