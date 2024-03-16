@@ -134,7 +134,7 @@ public interface BoltProcCounterConfig extends Config
             position = 5,
             keyName = "LongestDryStreak",
             name = "Longest dry streak",
-            description = "Shows longest streak of no bolt procs"
+            description = "Shows longest dry streak of no bolt procs"
     )
     default boolean LongestDryStreak()
     {
@@ -170,7 +170,7 @@ public interface BoltProcCounterConfig extends Config
             position = 8,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
-            description = "Toggle to reset the counters for this bolt type. Resets also saved data"
+            description = "Toggle to reset the counters for this bolt type. Resets also saved data on next attack"
 
     )
     default boolean resetCounters()
