@@ -18,6 +18,9 @@ import net.runelite.api.VarPlayer;
 
 import java.text.DecimalFormat;
 import java.util.Objects;
+import java.io.*;
+import java.nio.file.*;
+import static net.runelite.client.RuneLite.RUNELITE_DIR;
 
 @Slf4j
 @PluginDescriptor(
@@ -62,8 +65,9 @@ public class BoltProcCounterPlugin extends Plugin
 	private int ammoId;
 
 	public String ammoName;
+	public String savedData;
 	public int ammoIndex;
-	public int wasAmmoIndex = 0;
+	public int wasAmmoIndex = -1;
 	private int specialPercentage = 0;
 
 
@@ -72,6 +76,7 @@ public class BoltProcCounterPlugin extends Plugin
 	boolean soundMuted = true;
 	boolean soundMutedB2B = true;
 	boolean needAccuracyPass = false;
+	boolean shouldLoad = true;
 	private static final int coolDownTicks = 4;
 	private int coolDownTicksRemaining = 0;
 
@@ -92,24 +97,32 @@ public class BoltProcCounterPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		// Check if the "Reset Counters" toggle was changed
-		if (event.getKey().equals("resetCounters"))
+		// Check if the "dataSaving" toggle was changed
+		if (event.getKey().equals("dataSaving"))
+		{
+			// make "shouldLoad" true to load all the data on next tick
+			if (config.dataSaving())
+			{
+				shouldLoad = true;
+			}
+		}
+
+		// Check if the "resetCounters" toggle was changed
+		else if (event.getKey().equals(("resetCounters")))
 		{
 			if (wasAmmoIndex != -1)
 			{
 				attackCounterArray[wasAmmoIndex] = 0;
-				procCounterArray[wasAmmoIndex] = 0;
-				procDryRate = 0.0;
-				longestDryStreakArray[wasAmmoIndex] = 0;
-				rate = 0.0;
-				expectedProcs = 0.0;
 				attacksSinceLastProcArray[wasAmmoIndex] = 0;
-				acbSpecsProcsArray[wasAmmoIndex] = 0;
+				longestDryStreakArray[wasAmmoIndex] = 0;
+				procCounterArray[wasAmmoIndex] = 0;
 				acbSpecsUsedArray[wasAmmoIndex] = 0;
-				zcbSpecsProcsArray[wasAmmoIndex] = 0;
+				acbSpecsProcsArray[wasAmmoIndex] = 0;
 				zcbSpecsUsedArray[wasAmmoIndex] = 0;
+				zcbSpecsProcsArray[wasAmmoIndex] = 0;
 			}
 		}
+
 	}
 
 	@Subscribe
@@ -134,6 +147,14 @@ public class BoltProcCounterPlugin extends Plugin
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
 		{
+			// only load data once. When "shouldLoad" is true and data saving is enabled
+			if (shouldLoad && config.dataSaving())
+			{
+				loadFromFile();
+				// "shouldLoad" only turns True if data saving config is toggled back on. Or on client start
+				shouldLoad = false;
+			}
+
 			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
 
@@ -143,8 +164,8 @@ public class BoltProcCounterPlugin extends Plugin
 				expectedRate *= 1.1;
 			}
 
-			// 10% bonus from zcb (assumed, remove comment if its correct)
-			// if (weaponId == ItemID.ZARYTE_CROSSBOW)
+			// 10% bonus from zcb (assumed, remove config setting if it turns out to be true)
+			// if (weaponId == ItemID.ZARYTE_CROSSBOW && config.zcbBoostedRate())
 			// {
 			//	expectedRate *= 1.1;
 			// }
@@ -208,6 +229,12 @@ public class BoltProcCounterPlugin extends Plugin
 								attacksSinceLastProcArray[ammoIndex] = 0;
 
 							}
+						}
+
+						if (config.dataSaving())
+						{
+							// save data to a file after every attack
+							saveToFile();
 						}
 
 						// hacky way to track if sound id is being updated or not, aka player has muted sounds
@@ -405,10 +432,69 @@ public class BoltProcCounterPlugin extends Plugin
 		return animationId == 7552 || animationId == 9168 || animationId == 9206 || animationId == 4230 || animationId == 9205 || animationId == 9166;
 	}
 
+	private void saveToFile() {
+		try {
+			Player player = client.getLocalPlayer();
+			// Get the directory path for the player's data
+			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
+
+			// Check if the directory already exists
+			if (!Files.exists(pluginDirectory)) {
+				Files.createDirectories(pluginDirectory); // Create the directory if it doesn't exist
+			}
+
+			// Write data to a file within the player's directory
+			Path dataFilePath = pluginDirectory.resolve(ammoName + ".txt");
+			savedData = attackCounterArray[ammoIndex] + ";" + attacksSinceLastProcArray[ammoIndex] + ";" +
+					longestDryStreakArray[ammoIndex] + ";" + procCounterArray[ammoIndex] + ";" + acbSpecsUsedArray[ammoIndex] + ";" +
+					acbSpecsProcsArray[ammoIndex] + ";" + zcbSpecsUsedArray[ammoIndex] + ";" + zcbSpecsProcsArray[ammoIndex];
+			Files.write(dataFilePath, savedData.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void loadFromFile() {
+		try {
+			Player player = client.getLocalPlayer();
+			// Get the directory path for the player's data
+			// load all data that is tracked and make that the current counters
+			String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx"};
+			String loadedData = "";
+			for (int i = 0; i < ammoNames.length; i++)
+			{
+				Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName(),ammoNames[i] + ".txt");
+				if (Files.exists(dataDirectory))
+				{
+					loadedData = (new String(Files.readAllBytes(dataDirectory)));
+				}
+				else
+				{
+					loadedData = ("0;0;0;0;0;0;0;0");
+				}
+
+				// Split the loaded data by semicolons
+				String[] parts = loadedData.toString().split(";");
+
+				// add loaded data to arrays
+				attackCounterArray[i] = Integer.parseInt(parts[0]);
+				attacksSinceLastProcArray[i] = Integer.parseInt(parts[1]);
+				longestDryStreakArray[i] = Integer.parseInt(parts[2]);
+				procCounterArray[i] = Integer.parseInt(parts[3]);
+				acbSpecsUsedArray[i] = Integer.parseInt(parts[4]);
+				acbSpecsProcsArray[i] = Integer.parseInt(parts[5]);
+				zcbSpecsUsedArray[i] = Integer.parseInt(parts[6]);
+				zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-
 		if (event.getVarpId() != VarPlayer.SPECIAL_ATTACK_PERCENT)
 		{
 			return;

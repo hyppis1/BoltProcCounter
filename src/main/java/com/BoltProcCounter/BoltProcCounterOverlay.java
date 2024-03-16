@@ -27,7 +27,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
         this.client = client;
         this.plugin = plugin;
         this.config = config;
-        setPosition(OverlayPosition.BOTTOM_LEFT);
+        setPosition(OverlayPosition.TOP_LEFT);
         setPriority(OverlayPriority.LOW);
         setLayer(OverlayLayer.UNDER_WIDGETS);
         getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Ruby Counter overlay"));

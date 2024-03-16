@@ -17,11 +17,20 @@ public interface BoltProcCounterConfig extends Config
     )
     default boolean EnableOverLay()
     {
-        return true;
+        return false;
     }
 
     @ConfigItem(
             position = 2,
+            keyName = "dataSaving",
+            name = "Load/Save data",
+            description = "Will overwrite current data with newly loaded data. " +
+                    "Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
+    )
+    default boolean dataSaving() {return true;}
+
+    @ConfigItem(
+            position = 3,
             keyName = "KandarinHardDiary",
             name = "Kandarin hard diary",
             description = "Check if Kandarin hard diary is completed (10% increased bolt proc chance)"
@@ -32,7 +41,7 @@ public interface BoltProcCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 3,
+            position = 4,
             keyName = "pvpRates",
             name = "Use pvp proc rates",
             description = "Enable if you are tracking bolt proc rates in pvp (different rates for some bolts procs compared to pvm)"
@@ -42,8 +51,9 @@ public interface BoltProcCounterConfig extends Config
         return false;
     }
 
+
     @ConfigItem(
-            position = 4,
+            position = 5,
             keyName = "AcbTracking",
             name = "Separate Acb specs",
             description = "Separate Armadyl crossbow special attacks from normal attacks"
@@ -54,7 +64,7 @@ public interface BoltProcCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 5,
+            position = 6,
             keyName = "ZcbTracking",
             name = "Separate Zcb specs",
             description = "Separate Zaryte crossbow special attacks"
@@ -67,7 +77,7 @@ public interface BoltProcCounterConfig extends Config
     @ConfigSection(
             name = "Display data in overlay",
             description = "Configure what data you want to see on the overlay",
-            position = 6,
+            position = 7,
             closedByDefault = true
     )
     String ShownStatsSection = "ShownStats";
@@ -89,7 +99,7 @@ public interface BoltProcCounterConfig extends Config
             position = 2,
             keyName = "ExpectedProcs",
             name = "Expected proc rate",
-            description = "Shows expected bolt proc rate"
+            description = "Shows expected bolt proc rate (Assumes 100% accuracy)"
     )
     default boolean ExpectedProcs()
     {
@@ -113,7 +123,7 @@ public interface BoltProcCounterConfig extends Config
             position = 4,
             keyName = "ProcDryChance",
             name = "Proc dry chance",
-            description = "Shows chance of getting bolt proc in last x attacks"
+            description = "Shows chance of getting bolt proc in last x attacks (Assumes 100% accuracy)"
     )
     default boolean ProcDryChance()
     {
@@ -157,10 +167,10 @@ public interface BoltProcCounterConfig extends Config
 
 
     @ConfigItem(
-            position = 7,
+            position = 8,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
-            description = "Toggle to reset the counters for this bolt type"
+            description = "Toggle to reset the counters for this bolt type. Resets also saved data"
 
     )
     default boolean resetCounters()
