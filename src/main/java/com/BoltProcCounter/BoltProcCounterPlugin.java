@@ -65,7 +65,6 @@ public class BoltProcCounterPlugin extends Plugin
 	private int ammoId;
 
 	public String ammoName;
-	public String savedData;
 	public int ammoIndex;
 	public int wasAmmoIndex = -1;
 	private int specialPercentage = 0;
@@ -433,7 +432,10 @@ public class BoltProcCounterPlugin extends Plugin
 	}
 
 	private void saveToFile() {
-		try {
+		try
+		{
+			// normal data saving
+			
 			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
 			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
@@ -445,12 +447,59 @@ public class BoltProcCounterPlugin extends Plugin
 
 			// Write data to a file within the player's directory
 			Path dataFilePath = pluginDirectory.resolve(ammoName + ".txt");
-			savedData = attackCounterArray[ammoIndex] + ";" + attacksSinceLastProcArray[ammoIndex] + ";" +
+			String savedData = attackCounterArray[ammoIndex] + ";" + attacksSinceLastProcArray[ammoIndex] + ";" +
 					longestDryStreakArray[ammoIndex] + ";" + procCounterArray[ammoIndex] + ";" + acbSpecsUsedArray[ammoIndex] + ";" +
 					acbSpecsProcsArray[ammoIndex] + ";" + zcbSpecsUsedArray[ammoIndex] + ";" + zcbSpecsProcsArray[ammoIndex];
 			Files.write(dataFilePath, savedData.getBytes());
-		} catch (IOException e) {
-			e.printStackTrace();
+
+			// data sample tracking saving
+			System.out.println("config: " + config.dataSampleSaving() + "| sample size: " + config.sampleSize() + "| Attacks: " + attackCounterArray[ammoIndex]);
+			if (config.dataSampleSaving() && attackCounterArray[ammoIndex] % config.sampleSize() == 0)
+			{
+				savedData = "";
+				if (config.saveAttacks())
+				{
+					savedData = String.valueOf(attackCounterArray[ammoIndex]);
+				}
+				if (config.saveSinceLast())
+				{
+					savedData += (";" + attacksSinceLastProcArray[ammoIndex]);
+				}
+				if (config.saveLongestDry())
+				{
+					savedData += (";" + longestDryStreakArray[ammoIndex]);
+				}
+				if (config.saveProcs())
+				{
+					savedData += (";" + procCounterArray[ammoIndex]);
+				}
+				if (config.saveAcbData())
+				{
+					savedData += (";" + acbSpecsUsedArray[ammoIndex]);
+					savedData += (";" + acbSpecsProcsArray[ammoIndex]);
+				}
+				if (config.saveZcbData())
+				{
+					savedData += (";" + zcbSpecsUsedArray[ammoIndex]);
+					savedData += (";" + zcbSpecsProcsArray[ammoIndex]);
+				}
+				dataFilePath = pluginDirectory.resolve(ammoName + "_data_tracking.txt");
+				// check if file exists
+				if (!Files.exists(dataFilePath)) {
+					// Create the file if it doesn't exist
+					try {
+						Files.createFile(dataFilePath);
+					} catch (IOException e) {
+						System.err.println("Error creating file: " + e.getMessage());
+					}
+				}
+
+				Files.write(dataFilePath, (savedData + "\n").getBytes(), StandardOpenOption.APPEND);
+			}
+			
+		} catch (IOException e)
+		{
+			System.err.println("Error saving to file: " + e.getMessage());
 		}
 	}
 
@@ -488,7 +537,7 @@ public class BoltProcCounterPlugin extends Plugin
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println("Error loading from file: " + e.getMessage());
 		}
 	}
 

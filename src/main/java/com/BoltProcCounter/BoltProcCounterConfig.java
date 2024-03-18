@@ -1,9 +1,6 @@
 package com.BoltProcCounter;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.*;
 
 @ConfigGroup("BoltProcCounter")
 public interface BoltProcCounterConfig extends Config
@@ -24,8 +21,8 @@ public interface BoltProcCounterConfig extends Config
             position = 2,
             keyName = "dataSaving",
             name = "Load/Save data",
-            description = "Will overwrite current data with newly loaded data. " +
-                    "Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
+            description = "Will overwrite current data with newly loaded data." +
+                    "<br/>Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
     )
     default boolean dataSaving() {return true;}
 
@@ -165,9 +162,89 @@ public interface BoltProcCounterConfig extends Config
         return true;
     }
 
+    @ConfigSection(
+            name = "Data sample tracking",
+            description = "Configure your data sample tracking",
+            position = 8,
+            closedByDefault = true
+    )
+    String dataTrackingSection = "DataTracking";
 
     @ConfigItem(
+            section = dataTrackingSection,
+            position = 1,
+            keyName = "dataSampleSaving",
+            name = "Enable sample saving",
+            description = "Makes additional .txt file that appends with sample data." +
+                    "<br/>Load/Save data needs to be enabled to save sample data." +
+                    "<br/>Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
+    )
+    default boolean dataSampleSaving() {return false;}
+
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 2,
+            keyName = "sampleSize",
+            name = "Sample size",
+            description = "Save sample data every X attacks"
+    )
+    @Range(min = 1)
+    default int sampleSize() { return 100; }
+
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 3,
+            keyName = "saveAttacks",
+            name = "Save attacks",
+            description = "Save amount of attacks in sample data"
+    )
+    default boolean saveAttacks() {return true;}
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 4,
+            keyName = "saveProcs",
+            name = "Save procs",
+            description = "Save amount of procs in sample data"
+    )
+    default boolean saveProcs() {return true;}
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 5,
+            keyName = "saveSinceLast",
+            name = "Save since last",
+            description = "Save since last proc in sample data"
+    )
+    default boolean saveSinceLast() {return true;}
+
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 6,
+            keyName = "saveLongestDry",
+            name = "Save longest dry",
+            description = "Save longest dry in sample data"
+    )
+    default boolean saveLongestDry() {return true;}
+
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 7,
+            keyName = "saveAcbData",
+            name = "Save Acb data",
+            description = "Save Acb specs/procs in sample data"
+    )
+    default boolean saveAcbData() {return true;}
+    @ConfigItem(
+            section = dataTrackingSection,
             position = 8,
+            keyName = "saveZcbData",
+            name = "Save Zcb data",
+            description = "Save Zcb specs/procs in sample data"
+    )
+    default boolean saveZcbData() {return true;}
+
+
+    @ConfigItem(
+            position = 9,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
             description = "Toggle to reset the counters for this bolt type. Resets also saved data on next attack"

@@ -4,7 +4,7 @@ This plugin tracks your attacks, procs and rate of bolts procs.
 There is options to separate Armadyl/Zaryte cross bow special attacks from the normal counter.
 You must have sounds enabled for the plugin to track ruby bolt procs.
 
-For bolts effects that dont bypass accuracy check, the plugin assumes 100% accuracy for expected rates tracking.
+For bolts effects that don't bypass accuracy check, the plugin assumes 100% accuracy for expected rates tracking.
 
 ## Data saving
 
@@ -16,5 +16,8 @@ This example data is "Attacks: 27, Since last proc: 5, Longest dry: 13, Procs: 3
 
 Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"bolt type".txt
 
+Sample saving works the same way. Saves data to .txt file but will append the data. 
+Sample data can be easily imported to Excel file using Excels in-build features.
 
+Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"bolt type"_data_tracking.txt
 
