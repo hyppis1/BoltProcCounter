@@ -202,14 +202,6 @@ public interface BoltProcCounterConfig extends Config
     @ConfigItem(
             section = dataTrackingSection,
             position = 4,
-            keyName = "saveProcs",
-            name = "Save procs",
-            description = "Save amount of procs in sample data"
-    )
-    default boolean saveProcs() {return true;}
-    @ConfigItem(
-            section = dataTrackingSection,
-            position = 5,
             keyName = "saveSinceLast",
             name = "Save since last",
             description = "Save since last proc in sample data"
@@ -218,13 +210,21 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = dataTrackingSection,
-            position = 6,
+            position = 5,
             keyName = "saveLongestDry",
             name = "Save longest dry",
             description = "Save longest dry in sample data"
     )
     default boolean saveLongestDry() {return true;}
-
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 6,
+            keyName = "saveProcs",
+            name = "Save procs",
+            description = "Save amount of procs in sample data"
+    )
+    default boolean saveProcs() {return true;}
+    
     @ConfigItem(
             section = dataTrackingSection,
             position = 7,

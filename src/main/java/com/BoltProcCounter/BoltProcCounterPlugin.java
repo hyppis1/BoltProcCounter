@@ -459,36 +459,74 @@ public class BoltProcCounterPlugin extends Plugin
 				savedData = "";
 				if (config.saveAttacks())
 				{
-					savedData = String.valueOf(attackCounterArray[ammoIndex]);
+					savedData = (attackCounterArray[ammoIndex] + ";");
 				}
 				if (config.saveSinceLast())
 				{
-					savedData += (";" + attacksSinceLastProcArray[ammoIndex]);
+					savedData += (attacksSinceLastProcArray[ammoIndex] + ";");
 				}
 				if (config.saveLongestDry())
 				{
-					savedData += (";" + longestDryStreakArray[ammoIndex]);
+					savedData += (longestDryStreakArray[ammoIndex] + ";");
 				}
 				if (config.saveProcs())
 				{
-					savedData += (";" + procCounterArray[ammoIndex]);
+					savedData += (procCounterArray[ammoIndex] + ";");
 				}
 				if (config.saveAcbData())
 				{
-					savedData += (";" + acbSpecsUsedArray[ammoIndex]);
-					savedData += (";" + acbSpecsProcsArray[ammoIndex]);
+					savedData += (acbSpecsUsedArray[ammoIndex] + ";");
+					savedData += (acbSpecsProcsArray[ammoIndex] + ";");
 				}
 				if (config.saveZcbData())
 				{
-					savedData += (";" + zcbSpecsUsedArray[ammoIndex]);
-					savedData += (";" + zcbSpecsProcsArray[ammoIndex]);
+					savedData += (zcbSpecsUsedArray[ammoIndex]+ ";");
+					savedData += (zcbSpecsProcsArray[ammoIndex]);
 				}
+				// remove final ; to make it look nicer
+				if (savedData.endsWith(";"))
+				{
+					savedData = savedData.substring(0, savedData.length() -1);
+				}
+
 				dataFilePath = pluginDirectory.resolve(ammoName + "_data_tracking.txt");
 				// check if file exists
 				if (!Files.exists(dataFilePath)) {
 					// Create the file if it doesn't exist
 					try {
 						Files.createFile(dataFilePath);
+						// make headers for the newly formed file. Only figure out headers once when making the file
+						String headerText = "";
+						if (config.saveAttacks())
+						{
+							headerText = "Attacks;";
+						}
+						if (config.saveSinceLast())
+						{
+							headerText += "SinceLastProc;";
+						}
+						if (config.saveLongestDry())
+						{
+							headerText += "LongestDry;";
+						}
+						if (config.saveProcs())
+						{
+							headerText += "Procs;";
+						}
+						if (config.saveAcbData())
+						{
+							headerText += "AcbSpecs;AcbProcs;";
+						}
+						if (config.saveZcbData())
+						{
+							headerText += "ZcbSpecs;ZcbProcs";
+						}
+						// remove final ; to make it look nicer
+						if (headerText.endsWith(";"))
+						{
+							headerText = headerText.substring(0, headerText.length() -1);
+						}
+						Files.write(dataFilePath, (headerText + "\n").getBytes(), StandardOpenOption.APPEND);
 					} catch (IOException e) {
 						System.err.println("Error creating file: " + e.getMessage());
 					}
