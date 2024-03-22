@@ -68,6 +68,8 @@ public class BoltProcCounterPlugin extends Plugin
 	private int ammoId;
 
 	public String ammoName;
+
+	public String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx"};
 	public int ammoIndex;
 	public int wasAmmoIndex = -1;
 	private int specialPercentage = 0;
@@ -449,6 +451,10 @@ public class BoltProcCounterPlugin extends Plugin
 			// normal data saving
 
 			Player player = client.getLocalPlayer();
+			if (player.getName() == null)
+			{
+				return;
+			}
 			// Get the directory path for the player's data
 			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
 
@@ -457,12 +463,15 @@ public class BoltProcCounterPlugin extends Plugin
 				Files.createDirectories(pluginDirectory); // Create the directory if it doesn't exist
 			}
 
-			// Write data to a file within the player's directory
-			Path dataFilePath = pluginDirectory.resolve(ammoName + ".txt");
-			String savedData = attackCounterArray[ammoIndex] + ";" + attacksSinceLastProcArray[ammoIndex] + ";" +
-					longestDryStreakArray[ammoIndex] + ";" + procCounterArray[ammoIndex] + ";" + acbSpecsUsedArray[ammoIndex] + ";" +
-					acbSpecsProcsArray[ammoIndex] + ";" + zcbSpecsUsedArray[ammoIndex] + ";" + zcbSpecsProcsArray[ammoIndex];
-			Files.write(dataFilePath, savedData.getBytes());
+			// Write data to a file within the player's directory, save all ammo data
+			for (int i = 0; i < ammoNames.length; i++)
+			{
+				Path dataFilePath = pluginDirectory.resolve(ammoNames[i] + ".txt");
+				String savedData = attackCounterArray[i] + ";" + attacksSinceLastProcArray[i] + ";" +
+						longestDryStreakArray[i] + ";" + procCounterArray[i] + ";" + acbSpecsUsedArray[i] + ";" +
+						acbSpecsProcsArray[i] + ";" + zcbSpecsUsedArray[i] + ";" + zcbSpecsProcsArray[i];
+				Files.write(dataFilePath, savedData.getBytes());
+			}
 
 		} catch (IOException e)
 		{
@@ -574,7 +583,7 @@ public class BoltProcCounterPlugin extends Plugin
 			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
 			// load all data that is tracked and make that the current counters
-			String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx"};
+
 			String loadedData = "";
 			for (int i = 0; i < ammoNames.length; i++)
 			{
