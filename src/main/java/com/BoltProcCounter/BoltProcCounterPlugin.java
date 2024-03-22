@@ -159,16 +159,17 @@ public class BoltProcCounterPlugin extends Plugin
 
 		ammoIndex = ammoIdToArrayIndex();
 
+		// only load data once. When "shouldLoad" is true and data saving is enabled
+		if (shouldLoad && config.dataSaving())
+		{
+			loadFromFile();
+			// "shouldLoad" only turns True if data saving config is toggled back on. Or on client start
+			shouldLoad = false;
+		}
+
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
 		{
-			// only load data once. When "shouldLoad" is true and data saving is enabled
-			if (shouldLoad && config.dataSaving())
-			{
-				loadFromFile();
-				// "shouldLoad" only turns True if data saving config is toggled back on. Or on client start
-				shouldLoad = false;
-			}
 
 			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
