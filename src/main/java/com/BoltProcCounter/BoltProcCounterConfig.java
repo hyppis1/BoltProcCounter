@@ -22,6 +22,8 @@ public interface BoltProcCounterConfig extends Config
             keyName = "dataSaving",
             name = "Load/Save data",
             description = "Will overwrite current data with newly loaded data." +
+                    "<br/>Data is saved when client is closed." +
+                    "<br/>Data is loaded on client start or when this is turned on." +
                     "<br/>Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
     )
     default boolean dataSaving() {return true;}
@@ -176,7 +178,7 @@ public interface BoltProcCounterConfig extends Config
             keyName = "dataSampleSaving",
             name = "Enable sample saving",
             description = "Makes additional .txt file that appends with sample data." +
-                    "<br/>Load/Save data needs to be enabled to save sample data." +
+                    "<br/>Saves data when attack counter is divisible by sample size." +
                     "<br/>Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
     )
     default boolean dataSampleSaving() {return false;}
@@ -247,7 +249,7 @@ public interface BoltProcCounterConfig extends Config
             position = 9,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
-            description = "Toggle to reset the counters for this bolt type. Resets also saved data on next attack"
+            description = "Toggle to reset the counters for this bolt type. Resets also saved data on client closure"
 
     )
     default boolean resetCounters()

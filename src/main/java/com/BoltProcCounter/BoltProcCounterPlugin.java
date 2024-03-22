@@ -8,6 +8,7 @@ import net.runelite.api.*;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ClientShutdown;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -20,6 +21,8 @@ import java.text.DecimalFormat;
 import java.util.Objects;
 import java.io.*;
 import java.nio.file.*;
+import java.util.UUID;
+
 import static net.runelite.client.RuneLite.RUNELITE_DIR;
 
 @Slf4j
@@ -87,11 +90,19 @@ public class BoltProcCounterPlugin extends Plugin
 		overlayManager.add(BoltProcCounterOverlay);
 	}
 
+	@Subscribe
+	private void onClientShutdown(ClientShutdown e)
+	{
+		// save the normal data to file on client shutdown
+		saveToFile();
+	}
+
 	@Override
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(BoltProcCounterOverlay);
 	}
+
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
@@ -230,10 +241,10 @@ public class BoltProcCounterPlugin extends Plugin
 							}
 						}
 
-						if (config.dataSaving())
+						if (config.dataSampleSaving() && attackCounterArray[ammoIndex] % config.sampleSize() == 0)
 						{
-							// save data to a file after every attack
-							saveToFile();
+							// save data sample to a file if attackCounterArray is divisible by config sampleSize
+							saveDataSampleToFile();
 						}
 
 						// hacky way to track if sound id is being updated or not, aka player has muted sounds
@@ -431,11 +442,12 @@ public class BoltProcCounterPlugin extends Plugin
 		return animationId == 7552 || animationId == 9168 || animationId == 9206 || animationId == 4230 || animationId == 9205 || animationId == 9166;
 	}
 
-	private void saveToFile() {
+	private void saveToFile()
+	{
 		try
 		{
 			// normal data saving
-			
+
 			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
 			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
@@ -452,92 +464,108 @@ public class BoltProcCounterPlugin extends Plugin
 					acbSpecsProcsArray[ammoIndex] + ";" + zcbSpecsUsedArray[ammoIndex] + ";" + zcbSpecsProcsArray[ammoIndex];
 			Files.write(dataFilePath, savedData.getBytes());
 
-			// data sample tracking saving
-			System.out.println("config: " + config.dataSampleSaving() + "| sample size: " + config.sampleSize() + "| Attacks: " + attackCounterArray[ammoIndex]);
-			if (config.dataSampleSaving() && attackCounterArray[ammoIndex] % config.sampleSize() == 0)
-			{
-				savedData = "";
-				if (config.saveAttacks())
-				{
-					savedData = (attackCounterArray[ammoIndex] + ";");
-				}
-				if (config.saveSinceLast())
-				{
-					savedData += (attacksSinceLastProcArray[ammoIndex] + ";");
-				}
-				if (config.saveLongestDry())
-				{
-					savedData += (longestDryStreakArray[ammoIndex] + ";");
-				}
-				if (config.saveProcs())
-				{
-					savedData += (procCounterArray[ammoIndex] + ";");
-				}
-				if (config.saveAcbData())
-				{
-					savedData += (acbSpecsUsedArray[ammoIndex] + ";");
-					savedData += (acbSpecsProcsArray[ammoIndex] + ";");
-				}
-				if (config.saveZcbData())
-				{
-					savedData += (zcbSpecsUsedArray[ammoIndex]+ ";");
-					savedData += (zcbSpecsProcsArray[ammoIndex]);
-				}
-				// remove final ; to make it look nicer
-				if (savedData.endsWith(";"))
-				{
-					savedData = savedData.substring(0, savedData.length() -1);
-				}
-
-				dataFilePath = pluginDirectory.resolve(ammoName + "_data_tracking.txt");
-				// check if file exists
-				if (!Files.exists(dataFilePath)) {
-					// Create the file if it doesn't exist
-					try {
-						Files.createFile(dataFilePath);
-						// make headers for the newly formed file. Only figure out headers once when making the file
-						String headerText = "";
-						if (config.saveAttacks())
-						{
-							headerText = "Attacks;";
-						}
-						if (config.saveSinceLast())
-						{
-							headerText += "SinceLastProc;";
-						}
-						if (config.saveLongestDry())
-						{
-							headerText += "LongestDry;";
-						}
-						if (config.saveProcs())
-						{
-							headerText += "Procs;";
-						}
-						if (config.saveAcbData())
-						{
-							headerText += "AcbSpecs;AcbProcs;";
-						}
-						if (config.saveZcbData())
-						{
-							headerText += "ZcbSpecs;ZcbProcs";
-						}
-						// remove final ; to make it look nicer
-						if (headerText.endsWith(";"))
-						{
-							headerText = headerText.substring(0, headerText.length() -1);
-						}
-						Files.write(dataFilePath, (headerText + "\n").getBytes(), StandardOpenOption.APPEND);
-					} catch (IOException e) {
-						System.err.println("Error creating file: " + e.getMessage());
-					}
-				}
-
-				Files.write(dataFilePath, (savedData + "\n").getBytes(), StandardOpenOption.APPEND);
-			}
-			
 		} catch (IOException e)
 		{
 			System.err.println("Error saving to file: " + e.getMessage());
+		}
+	}
+
+	private void saveDataSampleToFile()
+	{
+		try
+		{
+			// data sample saving
+			
+			Player player = client.getLocalPlayer();
+			// Get the directory path for the player's data
+			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
+
+			// Check if the directory already exists
+			if (!Files.exists(pluginDirectory)) {
+				Files.createDirectories(pluginDirectory); // Create the directory if it doesn't exist
+			}
+
+			String savedData = "";
+			if (config.saveAttacks())
+			{
+				savedData = (attackCounterArray[ammoIndex] + ";");
+			}
+			if (config.saveSinceLast())
+			{
+				savedData += (attacksSinceLastProcArray[ammoIndex] + ";");
+			}
+			if (config.saveLongestDry())
+			{
+				savedData += (longestDryStreakArray[ammoIndex] + ";");
+			}
+			if (config.saveProcs())
+			{
+				savedData += (procCounterArray[ammoIndex] + ";");
+			}
+			if (config.saveAcbData())
+			{
+				savedData += (acbSpecsUsedArray[ammoIndex] + ";");
+				savedData += (acbSpecsProcsArray[ammoIndex] + ";");
+			}
+			if (config.saveZcbData())
+			{
+				savedData += (zcbSpecsUsedArray[ammoIndex]+ ";");
+				savedData += (zcbSpecsProcsArray[ammoIndex]);
+			}
+			// remove final ; to make it look nicer
+			if (savedData.endsWith(";"))
+			{
+				savedData = savedData.substring(0, savedData.length() -1);
+			}
+
+			Path dataFilePath = pluginDirectory.resolve(ammoName + "_data_tracking.txt");
+			// check if file exists
+			if (!Files.exists(dataFilePath)) {
+				// Create the file if it doesn't exist
+				try {
+					Files.createFile(dataFilePath);
+					// make headers for the newly formed file. Only figure out headers once when making the file
+					String headerText = "";
+					if (config.saveAttacks())
+					{
+						headerText = "Attacks;";
+					}
+					if (config.saveSinceLast())
+					{
+						headerText += "SinceLastProc;";
+					}
+					if (config.saveLongestDry())
+					{
+						headerText += "LongestDry;";
+					}
+					if (config.saveProcs())
+					{
+						headerText += "Procs;";
+					}
+					if (config.saveAcbData())
+					{
+						headerText += "AcbSpecs;AcbProcs;";
+					}
+					if (config.saveZcbData())
+					{
+						headerText += "ZcbSpecs;ZcbProcs";
+					}
+					// remove final ; to make it look nicer
+					if (headerText.endsWith(";"))
+					{
+						headerText = headerText.substring(0, headerText.length() -1);
+					}
+					Files.write(dataFilePath, (headerText + "\n").getBytes(), StandardOpenOption.APPEND);
+				} catch (IOException e) {
+					System.err.println("Error creating data sample file: " + e.getMessage());
+				}
+			}
+
+			Files.write(dataFilePath, (savedData + "\n").getBytes(), StandardOpenOption.APPEND);
+			
+		} catch (IOException e)
+		{
+			System.err.println("Error saving data sample to file: " + e.getMessage());
 		}
 	}
 
