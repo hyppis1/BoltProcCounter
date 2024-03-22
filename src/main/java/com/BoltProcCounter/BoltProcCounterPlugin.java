@@ -96,7 +96,10 @@ public class BoltProcCounterPlugin extends Plugin
 	private void onClientShutdown(ClientShutdown e)
 	{
 		// save the normal data to file on client shutdown
-		saveToFile();
+		if (config.dataSaving())
+		{
+			saveToFile();
+		}
 	}
 
 	@Override
