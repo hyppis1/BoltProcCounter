@@ -5,6 +5,7 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -16,12 +17,12 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.SoundEffectPlayed;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.GameState;
 
 import java.text.DecimalFormat;
 import java.util.Objects;
 import java.io.*;
 import java.nio.file.*;
-import java.util.UUID;
 
 import static net.runelite.client.RuneLite.RUNELITE_DIR;
 
@@ -81,6 +82,7 @@ public class BoltProcCounterPlugin extends Plugin
 	boolean soundMutedB2B = true;
 	boolean needAccuracyPass = false;
 	boolean shouldLoad = true;
+	boolean shouldSave = false;
 	private static final int coolDownTicks = 4;
 	private int coolDownTicksRemaining = 0;
 
@@ -95,10 +97,25 @@ public class BoltProcCounterPlugin extends Plugin
 	@Subscribe
 	private void onClientShutdown(ClientShutdown e)
 	{
-		// save the normal data to file on client shutdown
-		if (config.dataSaving())
+		// backup data saving in case client is closed without logging out first
+		if (shouldSave && config.dataSaving())
 		{
 			saveToFile();
+		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(final GameStateChanged event)
+	{
+		if (event.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			// only save data once. When "shouldSave" is true and data saving is enabled
+			if (shouldSave && config.dataSaving())
+			{
+				saveToFile();
+				// "shouldSave" only turns True after data is loaded/game tick has passed. To avoid overwriting existing data with zeros
+				shouldSave = false;
+			}
 		}
 	}
 
@@ -166,6 +183,9 @@ public class BoltProcCounterPlugin extends Plugin
 			// "shouldLoad" only turns True if data saving config is toggled back on. Or on client start
 			shouldLoad = false;
 		}
+
+		// "shouldSave" turns true after data loading has happened/game tick has passed.
+		shouldSave = true;
 
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
