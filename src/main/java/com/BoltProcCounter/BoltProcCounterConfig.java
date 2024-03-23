@@ -22,7 +22,7 @@ public interface BoltProcCounterConfig extends Config
             keyName = "dataSaving",
             name = "Load/Save data",
             description = "Will overwrite current data with newly loaded data." +
-                    "<br/>Data is saved when client is closed." +
+                    "<br/>Data is saved when client is closed or player logs out." +
                     "<br/>Data is loaded on client start or when this is turned on." +
                     "<br/>Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"
     )
