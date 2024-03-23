@@ -107,6 +107,15 @@ public class BoltProcCounterPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(final GameStateChanged event)
 	{
+		if (event.getGameState() == GameState.LOGGING_IN)
+		{
+			// Make "shouldLoad" true on log in. Only impacts if user played with x account earlier, logged out and logged back in with y account.
+			if (config.dataSaving())
+			{
+				shouldLoad = true;
+			}
+		}
+
 		if (event.getGameState() == GameState.LOGIN_SCREEN)
 		{
 			// only save data once. When "shouldSave" is true and data saving is enabled
