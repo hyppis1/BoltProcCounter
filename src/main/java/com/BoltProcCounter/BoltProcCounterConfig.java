@@ -9,7 +9,7 @@ public interface BoltProcCounterConfig extends Config
     @ConfigItem(
             position = 1,
             keyName = "EnableOverlay",
-            name = "Counter overlay",
+            name = "Show overlay",
             description = "Shows stats in overlay"
     )
     default boolean EnableOverLay()

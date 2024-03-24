@@ -321,17 +321,22 @@ public class BoltProcCounterPlugin extends Plugin
 
 	private boolean isCrossbowEquipped()
 	{
-		// Check if one of the specified crossbows is equipped
-		return weaponId == ItemID.ADAMANT_CROSSBOW
-				|| weaponId == ItemID.RUNE_CROSSBOW
-				|| weaponId == ItemID.RUNE_CROSSBOW_OR
-				|| weaponId == ItemID.DRAGON_CROSSBOW
-				|| weaponId == ItemID.DRAGON_CROSSBOW_CR
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_B
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_T
+		// Basicly check if any crossbow is equipped
+		return weaponId == ItemID.ZARYTE_CROSSBOW
 				|| weaponId == ItemID.ARMADYL_CROSSBOW
-				|| weaponId == ItemID.ZARYTE_CROSSBOW;
+				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_T
+				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_B
+				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW
+				|| weaponId == ItemID.DRAGON_CROSSBOW_CR
+				|| weaponId == ItemID.DRAGON_CROSSBOW
+				|| weaponId == ItemID.RUNE_CROSSBOW_OR
+				|| weaponId == ItemID.RUNE_CROSSBOW
+				|| weaponId == ItemID.ADAMANT_CROSSBOW
+				|| weaponId == ItemID.MITHRIL_CROSSBOW
+				|| weaponId == ItemID.STEEL_CROSSBOW
+				|| weaponId == ItemID.IRON_CROSSBOW
+				|| weaponId == ItemID.BLURITE_CROSSBOW
+				|| weaponId == ItemID.BRONZE_CROSSBOW;
 	}
 
 	private int ammoIdToArrayIndex()
