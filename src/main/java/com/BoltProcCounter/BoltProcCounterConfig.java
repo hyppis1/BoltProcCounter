@@ -50,9 +50,20 @@ public interface BoltProcCounterConfig extends Config
         return false;
     }
 
-
     @ConfigItem(
             position = 5,
+            keyName = "AccuracyPassRule",
+            name = "Accuracy pass rule",
+            description = "Bolt effects that needs to pass accuracy check, will use only hits that dealt dmg." +
+                    "<br/>Bolt effects that bypass accuracy will have no impact."
+    )
+    default boolean AccuracyPassRule()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            position = 6,
             keyName = "AcbTracking",
             name = "Separate Acb specs",
             description = "Separate Armadyl crossbow special attacks from normal attacks"
@@ -63,7 +74,7 @@ public interface BoltProcCounterConfig extends Config
     }
 
     @ConfigItem(
-            position = 6,
+            position = 7,
             keyName = "ZcbTracking",
             name = "Separate Zcb specs",
             description = "Separate Zaryte crossbow special attacks"
@@ -73,10 +84,11 @@ public interface BoltProcCounterConfig extends Config
         return true;
     }
 
+
     @ConfigSection(
             name = "Display data in overlay",
             description = "Configure what data you want to see on the overlay",
-            position = 7,
+            position = 8,
             closedByDefault = true
     )
     String ShownStatsSection = "ShownStats";
@@ -85,7 +97,7 @@ public interface BoltProcCounterConfig extends Config
             section = ShownStatsSection,
             position = 1,
             keyName = "ShowBoltName",
-            name = "Equipped bolts info",
+            name = "Show equipped bolts info",
             description = "Shows equipped bolts info in overlay"
     )
     default boolean ShowBoltName()
@@ -96,9 +108,58 @@ public interface BoltProcCounterConfig extends Config
     @ConfigItem(
             section = ShownStatsSection,
             position = 2,
+            keyName = "ShowAttacks",
+            name = "Show amount of attacks done",
+            description = "Shows amount of attacks in overlay"
+    )
+    default boolean ShowAttacks()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            section = ShownStatsSection,
+            position = 3,
+            keyName = "AttackDealtDmg",
+            name = "Show attacks that hit",
+            description = "Shows amount of attacks that hit/passed accuracy in overlay." +
+                    "<br/>Bolt effects that bypass accuracy check will cause small deviation."
+    )
+    default boolean AttackDealtDmg()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            section = ShownStatsSection,
+            position = 4,
+            keyName = "OverallAccuracy",
+            name = "Show overall accuracy",
+            description = "Shows overall accuracy with attacks in overlay" +
+                    "<br/>Bolt effects that bypass accuracy check will cause small deviation."
+    )
+    default boolean OverallAccuracy()
+    {
+        return false;
+    }
+
+    @ConfigItem(
+            section = ShownStatsSection,
+            position = 5,
+            keyName = "ShowProcs",
+            name = "Show amount of bolt procs",
+            description = "Shows amount of bolt procs in overlay"
+    )
+    default boolean ShowProcs()
+    {
+        return true;
+    }
+    @ConfigItem(
+            section = ShownStatsSection,
+            position = 6,
             keyName = "ExpectedProcs",
-            name = "Expected proc rate",
-            description = "Shows expected bolt proc rate (Assumes 100% accuracy)"
+            name = "Show expected proc rate",
+            description = "Shows expected bolt proc rate in overlay"
     )
     default boolean ExpectedProcs()
     {
@@ -107,10 +168,10 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = ShownStatsSection,
-            position = 3,
+            position = 7,
             keyName = "EnableSinceLastProc",
-            name = "Since last proc",
-            description = "Shows how many attacks since last bolt proc"
+            name = "Show since last proc",
+            description = "Shows how many attacks since last bolt proc in overlay"
     )
     default boolean EnableSinceLastProc()
     {
@@ -119,10 +180,10 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = ShownStatsSection,
-            position = 4,
+            position = 8,
             keyName = "ProcDryChance",
-            name = "Proc dry chance",
-            description = "Shows chance of getting bolt proc in last x attacks (Assumes 100% accuracy)"
+            name = "Show proc dry chance",
+            description = "Shows chance of getting bolt proc in last x attacks in overlay"
     )
     default boolean ProcDryChance()
     {
@@ -130,10 +191,10 @@ public interface BoltProcCounterConfig extends Config
     }
     @ConfigItem(
             section = ShownStatsSection,
-            position = 5,
+            position = 9,
             keyName = "LongestDryStreak",
-            name = "Longest dry streak",
-            description = "Shows longest dry streak of no bolt procs"
+            name = "Show longest dry streak",
+            description = "Shows longest dry streak of no bolt procs in overlay"
     )
     default boolean LongestDryStreak()
     {
@@ -142,7 +203,18 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = ShownStatsSection,
-            position = 6,
+            position = 10,
+            keyName = "ShowProcRate",
+            name = "Show bolt proc rate",
+            description = "Shows bolt proc rate in overlay"
+    )
+    default boolean ShowProcRate()
+    {
+        return true;
+    }
+    @ConfigItem(
+            section = ShownStatsSection,
+            position = 11,
             keyName = "AcbOverlay",
             name = "Show separated Acb",
             description = "Shows separated Armadyl crossbow special attacks"
@@ -154,20 +226,22 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = ShownStatsSection,
-            position = 7,
+            position = 12,
             keyName = "ZcbOverlay",
             name = "Show separated Zcb",
             description = "Shows separated Zaryte crossbow special attacks"
     )
     default boolean ZcbOverlay()
     {
-        return true;
+        return false;
     }
+
+
 
     @ConfigSection(
             name = "Data sample tracking",
             description = "Configure your data sample tracking",
-            position = 8,
+            position = 9,
             closedByDefault = true
     )
     String dataTrackingSection = "DataTracking";
@@ -244,9 +318,22 @@ public interface BoltProcCounterConfig extends Config
     )
     default boolean saveZcbData() {return true;}
 
+    @ConfigItem(
+            section = dataTrackingSection,
+            position = 9,
+            keyName = "saveAttackDealtDmg",
+            name = "Save attacks that hit",
+            description = "Save amount of attacks that hit in sample data"
+    )
+    default boolean saveAttackDealtDmg()
+    {
+        return false;
+    }
+
+
 
     @ConfigItem(
-            position = 9,
+            position = 10,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
             description = "Toggle to reset the counters for this bolt type. Resets also saved data on client closure"

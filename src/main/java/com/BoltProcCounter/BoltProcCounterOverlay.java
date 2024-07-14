@@ -3,6 +3,7 @@ package com.BoltProcCounter;
 import com.google.inject.Inject;
 import net.runelite.api.*;
 import net.runelite.client.ui.overlay.*;
+import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.components.LineComponent;
 
 import java.awt.*;
@@ -15,7 +16,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
 {
 
     @Inject
-    private BoltProcCounterConfig config;
+    private final BoltProcCounterConfig config;
     private final Client client;
     private final BoltProcCounterPlugin plugin;
 
@@ -28,7 +29,6 @@ public class BoltProcCounterOverlay extends OverlayPanel
         this.plugin = plugin;
         this.config = config;
         setPosition(OverlayPosition.TOP_LEFT);
-        setPriority(OverlayPriority.LOW);
         setLayer(OverlayLayer.UNDER_WIDGETS);
         getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Ruby Counter overlay"));
     }
@@ -36,7 +36,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
     @Override
     public Dimension render(Graphics2D graphics)
     {
-        if (config.EnableOverLay())
+        if (config.EnableOverLay() && plugin.wasAmmoIndex != -1)
         {
             if (!plugin.soundMutedB2B)
             {
@@ -53,16 +53,37 @@ public class BoltProcCounterOverlay extends OverlayPanel
 
                 }
 
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Attacks: ")
-                        .right(String.valueOf(plugin.attackCounterArray[plugin.wasAmmoIndex]))
-                        .build());
+                if (config.ShowAttacks())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Attacks: ")
+                            .right(String.valueOf(plugin.attackCounterArray[plugin.wasAmmoIndex]))
+                            .build());
+                }
 
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Procs: ")
-                        .right(String.valueOf(plugin.procCounterArray[plugin.wasAmmoIndex]))
-                        .build());
+                if (config.AttackDealtDmg())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Attacks hit: ")
+                            .right(String.valueOf(plugin.attackDealtDmgArray[plugin.wasAmmoIndex]))
+                            .build());
+                }
 
+                if (config.OverallAccuracy())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Accuracy: ")
+                            .right(plugin.overallAccuracy + "%")
+                            .build());
+                }
+
+                if (config.ShowProcs())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Procs: ")
+                            .right(String.valueOf(plugin.procCounterArray[plugin.wasAmmoIndex]))
+                            .build());
+                }
 
                 if (config.ExpectedProcs())
                 {
@@ -84,7 +105,7 @@ public class BoltProcCounterOverlay extends OverlayPanel
                 {
                     panelComponent.getChildren().add(LineComponent.builder()
                             .left("Dry chance: ")
-                            .right(String.valueOf(plugin.procDryRate + "%"))
+                            .right(plugin.procDryRate + "%")
                             .build());
                 }
 
@@ -96,11 +117,13 @@ public class BoltProcCounterOverlay extends OverlayPanel
                             .build());
                 }
 
-                panelComponent.getChildren().add(LineComponent.builder()
-                        .left("Rate: ")
-                        .right(plugin.rate + "%")
-                        .build());
-
+                if (config.ShowProcRate())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Proc rate: ")
+                            .right(plugin.rate + "%")
+                            .build());
+                }
 
                 if (config.AcbOverlay())
                 {

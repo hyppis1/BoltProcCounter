@@ -5,8 +5,7 @@ import javax.inject.Inject;
 
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.*;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
@@ -14,13 +13,13 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.events.SoundEffectPlayed;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.GameState;
+import net.runelite.api.events.StatChanged;
+import net.runelite.api.Skill;
+import net.runelite.api.events.FakeXpDrop;
 
 import java.text.DecimalFormat;
-import java.util.Objects;
 import java.io.*;
 import java.nio.file.*;
 
@@ -57,16 +56,18 @@ public class BoltProcCounterPlugin extends Plugin
 	public int[] acbSpecsProcsArray = new int[10]; // counters to track acb spec procs
 	public int[] zcbSpecsUsedArray = new int[10]; // counters to track zcb spec uses
 	public int[] zcbSpecsProcsArray = new int[10]; // counters to track zcb spec procs
+	public int[] attackDealtDmgArray = new int[10]; // counters to track hits that dealt dmg
 
+	public double overallAccuracy;
 	public double procDryRate = 0.0; // Counter to track proc dryness chance
 	public double rate = 0.0;
 	public double expectedProcs = 0.0; // Counter to track expected  procs
-
-	public double expectedRate = 0.06; // expected proc rate
+	public double expectedRate;
 	private int eventSoundId;
 	private int boltProcSoundId;
 	private int weaponId;
 	private int ammoId;
+	private int capeId;
 
 	public String ammoName;
 
@@ -78,12 +79,12 @@ public class BoltProcCounterPlugin extends Plugin
 
     boolean acbSpecUsed = false;
 	boolean zcbSpecUsed = false;
+	boolean HpXpDrop = false;
 	boolean soundMuted = true;
 	boolean soundMutedB2B = true;
 	boolean needAccuracyPass = false;
 	boolean shouldLoad = true;
 	boolean shouldSave = false;
-	private static final int coolDownTicks = 4;
 	private int coolDownTicksRemaining = 0;
 
 
@@ -161,6 +162,7 @@ public class BoltProcCounterPlugin extends Plugin
 				acbSpecsProcsArray[wasAmmoIndex] = 0;
 				zcbSpecsUsedArray[wasAmmoIndex] = 0;
 				zcbSpecsProcsArray[wasAmmoIndex] = 0;
+				attackDealtDmgArray[wasAmmoIndex] = 0;
 			}
 		}
 
@@ -171,19 +173,6 @@ public class BoltProcCounterPlugin extends Plugin
 	{
 		Client client = this.client;
 		Player localPlayer = client.getLocalPlayer();
-
-		// get currently equipped weapon and ammo id
-		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
-		if (equipment != null)
-		{
-			int SlotIdx = EquipmentInventorySlot.WEAPON.getSlotIdx();
-			weaponId = Objects.requireNonNull(equipment.getItem(SlotIdx)).getId();
-
-			SlotIdx = EquipmentInventorySlot.AMMO.getSlotIdx();
-			ammoId = Objects.requireNonNull(equipment.getItem(SlotIdx)).getId();
-		}
-
-		ammoIndex = ammoIdToArrayIndex();
 
 		// only load data once. When "shouldLoad" is true and data saving is enabled
 		if (shouldLoad && config.dataSaving())
@@ -196,10 +185,60 @@ public class BoltProcCounterPlugin extends Plugin
 		// "shouldSave" turns true after data loading has happened/game tick has passed.
 		shouldSave = true;
 
+		// get currently equipped weapon and ammo id
+		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+		if (equipment != null)
+		{
+			int SlotIdx = EquipmentInventorySlot.WEAPON.getSlotIdx();
+			Item slotItem = equipment.getItem(SlotIdx);
+			if (slotItem != null)
+			{
+				weaponId = slotItem.getId();
+			}
+			else
+			{
+				weaponId = -1;
+			}
+
+			SlotIdx = EquipmentInventorySlot.AMMO.getSlotIdx();
+			slotItem = equipment.getItem(SlotIdx);
+			if (slotItem != null)
+			{
+				ammoId = slotItem.getId();
+			}
+			else
+			{
+				ammoId = -1;
+			}
+
+			SlotIdx = EquipmentInventorySlot.CAPE.getSlotIdx();
+			slotItem = equipment.getItem(SlotIdx);
+			if (slotItem != null)
+			{
+				capeId = slotItem.getId();
+			}
+			else
+			{
+				capeId = -1;
+			}
+		}
+
+		ammoIndex = ammoIdToArrayIndex();
+
+		// if no ammo was found, check if player has quiver equipped
+		if (ammoIndex == -1)
+		{
+			if (isQuiverEquipped())
+			{
+				// quiver ammo slot var
+				ammoId = client.getVarpValue(4142);
+				ammoIndex = ammoIdToArrayIndex();
+			}
+		}
+
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
 		{
-
 			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
 
@@ -209,12 +248,6 @@ public class BoltProcCounterPlugin extends Plugin
 				expectedRate *= 1.1;
 			}
 
-			// 10% bonus from zcb (assumed, remove config setting if it turns out to be true)
-			// if (weaponId == ItemID.ZARYTE_CROSSBOW && config.zcbBoostedRate())
-			// {
-			//	expectedRate *= 1.1;
-			// }
-
 			// cool down ticks to not track multiple hits from single attack animation
 			if (coolDownTicksRemaining > 0)
 			{
@@ -223,6 +256,7 @@ public class BoltProcCounterPlugin extends Plugin
 
 			if (localPlayer != null && coolDownTicksRemaining == 0)
 			{
+
 				// check if crossbow is equipped
 				if (isCrossbowEquipped())
 				{
@@ -234,7 +268,7 @@ public class BoltProcCounterPlugin extends Plugin
 					if (isAttackAnimation(animationId))
 					{
 						// apply cool down after attack animation
-						coolDownTicksRemaining = coolDownTicks;
+						coolDownTicksRemaining = 4;
 
 						// check if tracking acb separately and if acb spec was used
 						if(config.AcbTracking() && acbSpecUsed)
@@ -260,7 +294,34 @@ public class BoltProcCounterPlugin extends Plugin
 						{
 							// Increment the attack counters
 							attackCounterArray[ammoIndex] ++;
-							attacksSinceLastProcArray[ammoIndex] ++;
+
+							// Increment the attacks hit counters, if hp xp drop happened
+							if (HpXpDrop)
+							{
+								attackDealtDmgArray[wasAmmoIndex] ++;
+							}
+
+							// if bolt bypasses accuracy check, increment since last proc here
+							if (!needAccuracyPass)
+							{
+								attacksSinceLastProcArray[ammoIndex] ++;
+							}
+							else
+							{
+								// else, depending on config on rule set, increment since last proc here
+								if (!config.AccuracyPassRule())
+								{
+									attacksSinceLastProcArray[ammoIndex] ++;
+								}
+								else
+								{
+									// or here if hp xp drop also happened
+									if (HpXpDrop)
+									{
+										attacksSinceLastProcArray[ammoIndex] ++;
+									}
+								}
+							}
 							if (eventSoundId == boltProcSoundId)
 							{
 								// Increment the proc counters
@@ -296,25 +357,66 @@ public class BoltProcCounterPlugin extends Plugin
 				}
 			}
 
-			// calculate and format expected rate of procs
-			expectedProcs = attackCounterArray[ammoIndex] * expectedRate;
+			// calculate proc rates etc. depending on config setting
+			if (config.AccuracyPassRule())
+			{
+				// if config is ON, check if bolt effects bypass accuracy check
+				if (needAccuracyPass)
+				{
+					// if bolt effect needs to pass accuracy check, use attackDealtDmgArray instead of attackCounterArray
+
+					// calculate expected rate of procs
+					expectedProcs = attackDealtDmgArray[ammoIndex] * expectedRate;
+
+					// calculate rate of procs
+					rate = (double) procCounterArray[ammoIndex] / attackDealtDmgArray[ammoIndex];
+				}
+				else
+				{
+					// if bolt effect bypasses accuracy check, do normal calcs
+
+					// calculate expected rate of procs
+					expectedProcs = attackCounterArray[ammoIndex] * expectedRate;
+
+					// calculate rate of procs
+					rate = (double) procCounterArray[ammoIndex] / attackCounterArray[ammoIndex];
+				}
+			}
+			else
+			{
+				// if config is OFF, do normal calcs
+
+				// calculate expected rate of procs
+				expectedProcs = attackCounterArray[ammoIndex] * expectedRate;
+
+				// calculate rate of procs
+				rate = (double) procCounterArray[ammoIndex] / attackCounterArray[ammoIndex];
+			}
+
+			// format expected rate of procs
 			expectedProcs = Double.parseDouble(new DecimalFormat("#.#").format(expectedProcs));
+
+			// format rate of procs
+			rate *= 100.0;
+			rate = Double.parseDouble(new DecimalFormat("#.###").format(rate));
 
 			// calculate and format proc dry chance
 			procDryRate = 1 - Math.pow(1 - expectedRate, attacksSinceLastProcArray[ammoIndex]);
 			procDryRate *= 100.0;
 			procDryRate = Double.parseDouble(new DecimalFormat("#.##").format(procDryRate));
 
-			// calculate and format rate of procs
-			rate = (double) procCounterArray[ammoIndex] / attackCounterArray[ammoIndex];
-			rate *= 100.0;
-			rate = Double.parseDouble(new DecimalFormat("#.###").format(rate));
-
+			// calculate and format overall accuracy
+			overallAccuracy = (double) attackDealtDmgArray[ammoIndex] / attackCounterArray[ammoIndex];
+			overallAccuracy *= 100.0;
+			overallAccuracy = Double.parseDouble(new DecimalFormat("#.##").format(overallAccuracy));
 
 			zcbSpecUsed = false;
 			acbSpecUsed = false;
 			// hacky way to track if sound id is being updated or not, aka player has muted sounds
 			eventSoundId = -1;
+
+			// make hp xp drop false
+			HpXpDrop = false;
 		}
 	}
 
@@ -339,6 +441,19 @@ public class BoltProcCounterPlugin extends Plugin
 				|| weaponId == ItemID.BRONZE_CROSSBOW;
 	}
 
+	private boolean isQuiverEquipped()
+	{
+		// Basicly check if any quiver is equipped
+		return capeId == ItemID.DIZANAS_MAX_CAPE
+				|| capeId == ItemID.DIZANAS_MAX_CAPE_L
+				|| capeId == ItemID.BLESSED_DIZANAS_QUIVER
+				|| capeId == ItemID.BLESSED_DIZANAS_QUIVER_L
+				|| capeId == ItemID.DIZANAS_QUIVER
+				|| capeId == ItemID.DIZANAS_QUIVER_L
+				|| capeId == ItemID.DIZANAS_QUIVER_UNCHARGED
+				|| capeId == ItemID.DIZANAS_QUIVER_UNCHARGED_L;
+	}
+
 	private int ammoIdToArrayIndex()
 	{
 		int arrayIndex;
@@ -357,8 +472,8 @@ public class BoltProcCounterPlugin extends Plugin
 			case ItemID.JADE_DRAGON_BOLTS_E:
 				arrayIndex = 1;
 				expectedRate = 0.06; // same rate both pvm and pvp and nobody will ever use these
-				// boltProcSoundId = ???;
-				ammoName = "Jade (not supported)";
+				boltProcSoundId = 2916;
+				ammoName = "Jade";
 				needAccuracyPass = false;
 				break;
 			case ItemID.PEARL_BOLTS_E:
@@ -507,7 +622,7 @@ public class BoltProcCounterPlugin extends Plugin
 				Path dataFilePath = pluginDirectory.resolve(ammoNames[i] + ".txt");
 				String savedData = attackCounterArray[i] + ";" + attacksSinceLastProcArray[i] + ";" +
 						longestDryStreakArray[i] + ";" + procCounterArray[i] + ";" + acbSpecsUsedArray[i] + ";" +
-						acbSpecsProcsArray[i] + ";" + zcbSpecsUsedArray[i] + ";" + zcbSpecsProcsArray[i];
+						acbSpecsProcsArray[i] + ";" + zcbSpecsUsedArray[i] + ";" + zcbSpecsProcsArray[i] + ";" + attackDealtDmgArray[i];
 				Files.write(dataFilePath, savedData.getBytes());
 			}
 
@@ -557,7 +672,11 @@ public class BoltProcCounterPlugin extends Plugin
 			if (config.saveZcbData())
 			{
 				savedData += (zcbSpecsUsedArray[ammoIndex]+ ";");
-				savedData += (zcbSpecsProcsArray[ammoIndex]);
+				savedData += (zcbSpecsProcsArray[ammoIndex]+ ";");
+			}
+			if (config.saveAttackDealtDmg())
+			{
+				savedData += (attackDealtDmgArray[ammoIndex]);
 			}
 			// remove final ; to make it look nicer
 			if (savedData.endsWith(";"))
@@ -595,7 +714,11 @@ public class BoltProcCounterPlugin extends Plugin
 					}
 					if (config.saveZcbData())
 					{
-						headerText += "ZcbSpecs;ZcbProcs";
+						headerText += "ZcbSpecs;ZcbProcs;";
+					}
+					if (config.saveAttackDealtDmg())
+					{
+						headerText += "AttacksHit";
 					}
 					// remove final ; to make it look nicer
 					if (headerText.endsWith(";"))
@@ -616,13 +739,16 @@ public class BoltProcCounterPlugin extends Plugin
 		}
 	}
 
-	private void loadFromFile() {
-		try {
+	private void loadFromFile()
+	{
+		// try to load 9 data points first, if it fails try to load old 8 data points
+		try
+		{
 			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
 			// load all data that is tracked and make that the current counters
 
-			String loadedData = "";
+			String loadedData;
 			for (int i = 0; i < ammoNames.length; i++)
 			{
 				Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName(),ammoNames[i] + ".txt");
@@ -632,11 +758,11 @@ public class BoltProcCounterPlugin extends Plugin
 				}
 				else
 				{
-					loadedData = ("0;0;0;0;0;0;0;0");
+					loadedData = ("0;0;0;0;0;0;0;0;0");
 				}
 
 				// Split the loaded data by semicolons
-				String[] parts = loadedData.toString().split(";");
+				String[] parts = loadedData.split(";");
 
 				// add loaded data to arrays
 				attackCounterArray[i] = Integer.parseInt(parts[0]);
@@ -647,13 +773,73 @@ public class BoltProcCounterPlugin extends Plugin
 				acbSpecsProcsArray[i] = Integer.parseInt(parts[5]);
 				zcbSpecsUsedArray[i] = Integer.parseInt(parts[6]);
 				zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
+				attackDealtDmgArray[i] = Integer.parseInt(parts[8]);
 			}
+			System.out.println("9 data points loaded");
 
 		} catch (Exception e) {
-			System.err.println("Error loading from file: " + e.getMessage());
+			System.err.println("Error loading 9 data points from file: " + e.getMessage());
+
+			// try old save format of 8 data points
+			try
+			{
+				Player player = client.getLocalPlayer();
+				// Get the directory path for the player's data
+				// load all data that is tracked and make that the current counters
+
+				String loadedData;
+				for (int i = 0; i < ammoNames.length; i++)
+				{
+					Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName(),ammoNames[i] + ".txt");
+					if (Files.exists(dataDirectory))
+					{
+						loadedData = (new String(Files.readAllBytes(dataDirectory)));
+					}
+					else
+					{
+						loadedData = ("0;0;0;0;0;0;0;0;0");
+					}
+
+					// Split the loaded data by semicolons
+					String[] parts = loadedData.split(";");
+
+					// add loaded data to arrays
+					attackCounterArray[i] = Integer.parseInt(parts[0]);
+					attacksSinceLastProcArray[i] = Integer.parseInt(parts[1]);
+					longestDryStreakArray[i] = Integer.parseInt(parts[2]);
+					procCounterArray[i] = Integer.parseInt(parts[3]);
+					acbSpecsUsedArray[i] = Integer.parseInt(parts[4]);
+					acbSpecsProcsArray[i] = Integer.parseInt(parts[5]);
+					zcbSpecsUsedArray[i] = Integer.parseInt(parts[6]);
+					zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
+				}
+				System.out.println("8 data points loaded");
+
+			} catch (Exception ee) {
+				System.err.println("Error loading 8 data points from file: " + ee.getMessage());
+			}
+
 		}
 	}
 
+	@Subscribe
+	public void onStatChanged(StatChanged event)
+	{
+		// check if skill is hp
+		if (event.getSkill() == Skill.HITPOINTS)
+		{
+			HpXpDrop = true;
+		}
+	}
+	@Subscribe
+	public void onFakeXpDrop(FakeXpDrop event)
+	{
+		// check if skill is hp
+		if (event.getSkill() == Skill.HITPOINTS)
+		{
+			HpXpDrop = true;
+		}
+	}
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
@@ -683,16 +869,14 @@ public class BoltProcCounterPlugin extends Plugin
 		}
 
 	}
-
 	@Subscribe
 	public void onSoundEffectPlayed(SoundEffectPlayed event)
 	{
 		soundMuted = false;
 		soundMutedB2B = false;
 		eventSoundId = event.getSoundId();
+		// System.out.println("sound id: " + eventSoundId);
 	}
-
-
 	@Provides
 	BoltProcCounterConfig provideConfig(ConfigManager configManager)
 	{
