@@ -230,8 +230,8 @@ public class BoltProcCounterPlugin extends Plugin
 		{
 			if (isQuiverEquipped())
 			{
-				// quiver ammo slot var
-				ammoId = client.getVarpValue(4142);
+				// quiver ammo slot ammo id
+				ammoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
 				ammoIndex = ammoIdToArrayIndex();
 			}
 		}
