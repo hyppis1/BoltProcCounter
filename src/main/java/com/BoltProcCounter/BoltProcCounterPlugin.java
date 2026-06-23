@@ -74,6 +74,8 @@ public class BoltProcCounterPlugin extends Plugin
 	public String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx"};
 	public int ammoIndex;
 	public int wasAmmoIndex = -1;
+	public int PlayingAnimationID;
+	public int PlayingAnimationFrame;
 	private int specialPercentage = 0;
 
 
@@ -85,7 +87,7 @@ public class BoltProcCounterPlugin extends Plugin
 	boolean needAccuracyPass = false;
 	boolean shouldLoad = true;
 	boolean shouldSave = false;
-	private int coolDownTicksRemaining = 0;
+
 
 
 	@Override
@@ -132,6 +134,11 @@ public class BoltProcCounterPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		// also save data when plugin is turned off
+		if (shouldSave && config.dataSaving())
+		{
+			saveToFile();
+		}
 		overlayManager.remove(BoltProcCounterOverlay);
 	}
 
@@ -173,6 +180,11 @@ public class BoltProcCounterPlugin extends Plugin
 	{
 		Client client = this.client;
 		Player localPlayer = client.getLocalPlayer();
+
+		if (localPlayer == null)
+		{
+			return;
+		}
 
 		// only load data once. When "shouldLoad" is true and data saving is enabled
 		if (shouldLoad && config.dataSaving())
@@ -242,119 +254,109 @@ public class BoltProcCounterPlugin extends Plugin
 			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
 
-			// 10% bonus from kandarin hard diary
-			if (config.KandarinHardDiary())
+			// check if crossbow is equipped
+			if (isCrossbowEquipped())
 			{
-				expectedRate *= 1.1;
-			}
-
-			// cool down ticks to not track multiple hits from single attack animation
-			if (coolDownTicksRemaining > 0)
-			{
-				coolDownTicksRemaining--;
-			}
-
-			if (localPlayer != null && coolDownTicksRemaining == 0)
-			{
-
-				// check if crossbow is equipped
-				if (isCrossbowEquipped())
+				// get players animation
+				if (localPlayer.getAnimation() == PlayingAnimationID)
 				{
-					// get players animation
-					int animationId = localPlayer.getAnimation();
-					// System.out.println("Player is performing animation with ID: " + animationId);
+					PlayingAnimationFrame = localPlayer.getAnimationFrame();
+				}
 
-					// check if its correct attack animation
-					if (isAttackAnimation(animationId))
+				// check if its correct attack animation
+				if (isAttackAnimation(PlayingAnimationID) && PlayingAnimationFrame < 1)
+				{
+
+					// check if tracking acb separately and if acb spec was used
+					if(config.AcbTracking() && acbSpecUsed)
 					{
-						// apply cool down after attack animation
-						coolDownTicksRemaining = 4;
-
-						// check if tracking acb separately and if acb spec was used
-						if(config.AcbTracking() && acbSpecUsed)
+						acbSpecsUsedArray[ammoIndex] ++;
+						// check if it was proc
+						if (eventSoundId == boltProcSoundId)
 						{
-							acbSpecsUsedArray[ammoIndex] ++;
-							// check if it was proc
-							if (eventSoundId == boltProcSoundId)
-							{
-								acbSpecsProcsArray[ammoIndex] ++;
-							}
+							acbSpecsProcsArray[ammoIndex] ++;
 						}
-						// check if tracking zcb separately and if zcb spec was used
-						else if (config.ZcbTracking() && zcbSpecUsed)
+					}
+					// check if tracking zcb separately and if zcb spec was used
+					else if (config.ZcbTracking() && zcbSpecUsed)
+					{
+						zcbSpecsUsedArray[ammoIndex] ++;
+						// check if it was proc
+						if (eventSoundId == boltProcSoundId)
 						{
-							zcbSpecsUsedArray[ammoIndex] ++;
-							// check if it was proc
-							if (eventSoundId == boltProcSoundId)
-							{
-								zcbSpecsProcsArray[ammoIndex] ++;
-							}
+							zcbSpecsProcsArray[ammoIndex] ++;
+						}
+					}
+					else
+					{
+						// Increment the attack counters
+						attackCounterArray[ammoIndex] ++;
+
+						// Increment the attacks hit counters, if hp xp drop happened
+						if (HpXpDrop)
+						{
+							attackDealtDmgArray[wasAmmoIndex] ++;
+						}
+
+						// if bolt bypasses accuracy check, increment since last proc here
+						if (!needAccuracyPass)
+						{
+							attacksSinceLastProcArray[ammoIndex] ++;
 						}
 						else
 						{
-							// Increment the attack counters
-							attackCounterArray[ammoIndex] ++;
-
-							// Increment the attacks hit counters, if hp xp drop happened
-							if (HpXpDrop)
-							{
-								attackDealtDmgArray[wasAmmoIndex] ++;
-							}
-
-							// if bolt bypasses accuracy check, increment since last proc here
-							if (!needAccuracyPass)
+							// else, depending on config on rule set, increment since last proc here
+							if (!config.AccuracyPassRule())
 							{
 								attacksSinceLastProcArray[ammoIndex] ++;
 							}
 							else
 							{
-								// else, depending on config on rule set, increment since last proc here
-								if (!config.AccuracyPassRule())
+								// or here if hp xp drop also happened
+								if (HpXpDrop)
 								{
 									attacksSinceLastProcArray[ammoIndex] ++;
 								}
-								else
-								{
-									// or here if hp xp drop also happened
-									if (HpXpDrop)
-									{
-										attacksSinceLastProcArray[ammoIndex] ++;
-									}
-								}
 							}
-							if (eventSoundId == boltProcSoundId)
+						}
+						if (eventSoundId == boltProcSoundId)
+						{
+							// Increment the proc counters
+							procCounterArray[ammoIndex] ++;
+
+							if (attacksSinceLastProcArray[ammoIndex] > longestDryStreakArray[ammoIndex])
 							{
-								// Increment the proc counters
-								procCounterArray[ammoIndex] ++;
-
-								if (attacksSinceLastProcArray[ammoIndex] > longestDryStreakArray[ammoIndex])
-								{
-									longestDryStreakArray[ammoIndex] = attacksSinceLastProcArray[ammoIndex];
-								}
-								// reset attacks since last ruby
-								attacksSinceLastProcArray[ammoIndex] = 0;
-
+								longestDryStreakArray[ammoIndex] = attacksSinceLastProcArray[ammoIndex];
 							}
-						}
+							// reset attacks since last ruby
+							attacksSinceLastProcArray[ammoIndex] = 0;
 
-						if (config.dataSampleSaving() && attackCounterArray[ammoIndex] % config.sampleSize() == 0)
-						{
-							// save data sample to a file if attackCounterArray is divisible by config sampleSize
-							saveDataSampleToFile();
-						}
-
-						// hacky way to track if sound id is being updated or not, aka player has muted sounds
-						// was problems in pvp combat for some odd reason so now checking if sound is muted in b2b attacks
-						if (soundMuted)
-						{
-							soundMutedB2B = true;
-						}
-						if (eventSoundId == -1)
-						{
-							soundMuted = true;
 						}
 					}
+
+					if (config.dataSampleSaving() && attackCounterArray[ammoIndex] % config.sampleSize() == 0)
+					{
+						// save data sample to a file if attackCounterArray is divisible by config sampleSize
+						saveDataSampleToFile();
+					}
+
+					// hacky way to track if sound id is being updated or not, aka player has muted sounds
+					// was problems in pvp combat for some odd reason so now checking if sound is muted in b2b attacks
+					if (soundMuted)
+					{
+						soundMutedB2B = true;
+					}
+					if (eventSoundId == -1)
+					{
+						soundMuted = true;
+					}
 				}
+			}
+
+			// 10% bonus from kandarin hard diary
+			if (config.KandarinHardDiary())
+			{
+				expectedRate *= 1.1;
 			}
 
 			// calculate proc rates etc. depending on config setting
@@ -424,34 +426,34 @@ public class BoltProcCounterPlugin extends Plugin
 	private boolean isCrossbowEquipped()
 	{
 		// Basicly check if any crossbow is equipped
-		return weaponId == ItemID.ZARYTE_CROSSBOW
-				|| weaponId == ItemID.ARMADYL_CROSSBOW
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_T
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW_B
-				|| weaponId == ItemID.DRAGON_HUNTER_CROSSBOW
-				|| weaponId == ItemID.DRAGON_CROSSBOW_CR
-				|| weaponId == ItemID.DRAGON_CROSSBOW
-				|| weaponId == ItemID.RUNE_CROSSBOW_OR
-				|| weaponId == ItemID.RUNE_CROSSBOW
-				|| weaponId == ItemID.ADAMANT_CROSSBOW
-				|| weaponId == ItemID.MITHRIL_CROSSBOW
-				|| weaponId == ItemID.STEEL_CROSSBOW
-				|| weaponId == ItemID.IRON_CROSSBOW
-				|| weaponId == ItemID.BLURITE_CROSSBOW
-				|| weaponId == ItemID.BRONZE_CROSSBOW;
+		return weaponId == net.runelite.api.gameval.ItemID.ZARYTE_XBOW
+				|| weaponId == net.runelite.api.gameval.ItemID.ACB
+				|| weaponId == net.runelite.api.gameval.ItemID.DRAGONHUNTER_XBOW
+				|| weaponId == net.runelite.api.gameval.ItemID.DRAGONHUNTER_XBOW_KBD
+				|| weaponId == net.runelite.api.gameval.ItemID.DRAGONHUNTER_XBOW_VORKATH
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_DRAGON
+				|| weaponId == net.runelite.api.gameval.ItemID.BH_XBOWS_CROSSBOW_DRAGON_CORRUPTED
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_RUNITE
+				|| weaponId == net.runelite.api.gameval.ItemID.LEAGUE_3_RUNE_XBOW
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_ADAMANTITE
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_MITHRIL
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_STEEL
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_IRON
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BLURITE
+				|| weaponId == net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BRONZE;
 	}
 
 	private boolean isQuiverEquipped()
 	{
 		// Basicly check if any quiver is equipped
-		return capeId == ItemID.DIZANAS_MAX_CAPE
-				|| capeId == ItemID.DIZANAS_MAX_CAPE_L
-				|| capeId == ItemID.BLESSED_DIZANAS_QUIVER
-				|| capeId == ItemID.BLESSED_DIZANAS_QUIVER_L
-				|| capeId == ItemID.DIZANAS_QUIVER
-				|| capeId == ItemID.DIZANAS_QUIVER_L
-				|| capeId == ItemID.DIZANAS_QUIVER_UNCHARGED
-				|| capeId == ItemID.DIZANAS_QUIVER_UNCHARGED_L;
+		return capeId == net.runelite.api.gameval.ItemID.SKILLCAPE_MAX_DIZANAS
+				|| capeId == net.runelite.api.gameval.ItemID.SKILLCAPE_MAX_DIZANAS_TROUVER
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_INFINITE
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_INFINITE_TROUVER
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_CHARGED
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_CHARGED_TROUVER
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_UNCHARGED
+				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_UNCHARGED_TROUVER;
 	}
 
 	private int ammoIdToArrayIndex()
@@ -459,33 +461,33 @@ public class BoltProcCounterPlugin extends Plugin
 		int arrayIndex;
 		switch (ammoId)
 		{
-			case ItemID.OPAL_BOLTS_E:
-			case ItemID.OPAL_DRAGON_BOLTS_E:
-			case ItemID.OPAL_DRAGON_BOLTS_E_27192:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_BRONZE_TIPPED_OPAL_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_OPAL:
+			case net.runelite.api.gameval.ItemID.BR_DRAGON_BOLTS_ENCHANTED_OPAL:
 				arrayIndex = 0;
 				expectedRate = 0.05; // same rate both pvm and pvp
 				boltProcSoundId = 2918;
 				ammoName = "Opal";
 				needAccuracyPass = false;
 				break;
-			case ItemID.JADE_BOLTS_E:
-			case ItemID.JADE_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_BLURITE_TIPPED_JADE_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_JADE:
 				arrayIndex = 1;
 				expectedRate = 0.06; // same rate both pvm and pvp and nobody will ever use these
 				boltProcSoundId = 2916;
 				ammoName = "Jade";
 				needAccuracyPass = false;
 				break;
-			case ItemID.PEARL_BOLTS_E:
-			case ItemID.PEARL_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_IRON_TIPPED_PEARL_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_PEARL:
 				arrayIndex = 2;
 				expectedRate = 0.06; // same rate both pvm and pvp
 				boltProcSoundId = 2920;
 				ammoName = "Pearl";
 				needAccuracyPass = false;
 				break;
-			case ItemID.TOPAZ_BOLTS_E:
-			case ItemID.TOPAZ_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_STEEL_TIPPED_REDTOPAZ_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_TOPAZ:
 				arrayIndex = 3;
 				if (config.pvpRates())
 				{
@@ -499,8 +501,8 @@ public class BoltProcCounterPlugin extends Plugin
 				ammoName = "Topaz";
 				needAccuracyPass = false;
 				break;
-			case ItemID.SAPPHIRE_BOLTS_E:
-			case ItemID.SAPPHIRE_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_MITHRIL_TIPPED_SAPPHIRE_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_SAPPHIRE:
 				arrayIndex = 4;
 				if (config.pvpRates())
 				{
@@ -514,8 +516,8 @@ public class BoltProcCounterPlugin extends Plugin
 				ammoName = "Sapphire";
 				needAccuracyPass = true;
 				break;
-			case ItemID.EMERALD_BOLTS_E:
-			case ItemID.EMERALD_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_MITHRIL_TIPPED_EMERALD_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_EMERALD:
 				arrayIndex = 5;
 				if (config.pvpRates())
 				{
@@ -529,8 +531,8 @@ public class BoltProcCounterPlugin extends Plugin
 				ammoName = "Emerald";
 				needAccuracyPass = true;
 				break;
-			case ItemID.RUBY_BOLTS_E:
-			case ItemID.RUBY_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_ADAMANTITE_TIPPED_RUBY_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_RUBY:
 				arrayIndex = 6;
 				if (config.pvpRates())
 				{
@@ -544,9 +546,9 @@ public class BoltProcCounterPlugin extends Plugin
 				ammoName = "Ruby";
 				needAccuracyPass = false;
 				break;
-			case ItemID.DIAMOND_BOLTS_E:
-			case ItemID.DIAMOND_BOLTS_E_23649:
-			case ItemID.DIAMOND_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_ADAMANTITE_TIPPED_DIAMOND_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_DIAMOND:
+			case net.runelite.api.gameval.ItemID.BR_DSTONE_BOLTS_E: // Not sure if these are dstone or diamond bolts. Same item id used to be diamond bolts
 				arrayIndex = 7;
 				if (config.pvpRates())
 				{
@@ -560,16 +562,16 @@ public class BoltProcCounterPlugin extends Plugin
 				ammoName = "Diamond";
 				needAccuracyPass = false;
 				break;
-			case ItemID.DRAGONSTONE_BOLTS_E:
-			case ItemID.DRAGONSTONE_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_RUNITE_TIPPED_DRAGONSTONE_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_DRAGONSTONE:
 				arrayIndex = 8;
 				expectedRate = 0.06; // same rate both pvm and pvp
 				boltProcSoundId = 2915;
 				ammoName = "Dragonstone";
 				needAccuracyPass = true;
 				break;
-			case ItemID.ONYX_BOLTS_E:
-			case ItemID.ONYX_DRAGON_BOLTS_E:
+			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_RUNITE_TIPPED_ONYX_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_ONYX:
 				arrayIndex = 9;
 				if (config.pvpRates())
 				{
@@ -823,6 +825,19 @@ public class BoltProcCounterPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		Actor actor = event.getActor();
+
+		// Check if the animation change is for the local player
+		if (actor == client.getLocalPlayer())
+		{
+			PlayingAnimationID = actor.getAnimation();
+			PlayingAnimationFrame = 0;
+
+		}
+	}
+	@Subscribe
 	public void onStatChanged(StatChanged event)
 	{
 		// check if skill is hp
@@ -856,12 +871,12 @@ public class BoltProcCounterPlugin extends Plugin
 		if (wasSpecialPercentage > specialPercentage)
 		{
 			// check for acb and zcb
-			if (weaponId == ItemID.ARMADYL_CROSSBOW)
+			if (weaponId == net.runelite.api.gameval.ItemID.ACB)
 			{
 				acbSpecUsed = true;
 			}
 
-			if (weaponId == ItemID.ZARYTE_CROSSBOW)
+			if (weaponId == net.runelite.api.gameval.ItemID.ZARYTE_XBOW)
 			{
 				zcbSpecUsed = true;
 			}
