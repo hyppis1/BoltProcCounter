@@ -630,7 +630,7 @@ public class BoltProcCounterPlugin extends Plugin
 
 		} catch (IOException e)
 		{
-			System.err.println("Error saving to file: " + e.getMessage());
+			log.error("Error saving to file: " + e.getMessage());
 		}
 	}
 
@@ -729,7 +729,7 @@ public class BoltProcCounterPlugin extends Plugin
 					}
 					Files.write(dataFilePath, (headerText + "\n").getBytes(), StandardOpenOption.APPEND);
 				} catch (IOException e) {
-					System.err.println("Error creating data sample file: " + e.getMessage());
+					log.error("Error creating data sample file: " + e.getMessage());
 				}
 			}
 
@@ -737,7 +737,7 @@ public class BoltProcCounterPlugin extends Plugin
 			
 		} catch (IOException e)
 		{
-			System.err.println("Error saving data sample to file: " + e.getMessage());
+			log.error("Error saving data sample to file: " + e.getMessage());
 		}
 	}
 
@@ -777,10 +777,10 @@ public class BoltProcCounterPlugin extends Plugin
 				zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
 				attackDealtDmgArray[i] = Integer.parseInt(parts[8]);
 			}
-			System.out.println("9 data points loaded");
+			log.info("9 data points loaded");
 
 		} catch (Exception e) {
-			System.err.println("Error loading 9 data points from file: " + e.getMessage());
+			log.error("Error loading 9 data points from file: " + e.getMessage());
 
 			// try old save format of 8 data points
 			try
@@ -815,10 +815,10 @@ public class BoltProcCounterPlugin extends Plugin
 					zcbSpecsUsedArray[i] = Integer.parseInt(parts[6]);
 					zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
 				}
-				System.out.println("8 data points loaded");
+				log.info("8 data points loaded");
 
 			} catch (Exception ee) {
-				System.err.println("Error loading 8 data points from file: " + ee.getMessage());
+				log.error("Error loading 8 data points from file: " + ee.getMessage());
 			}
 
 		}
@@ -890,7 +890,6 @@ public class BoltProcCounterPlugin extends Plugin
 		soundMuted = false;
 		soundMutedB2B = false;
 		eventSoundId = event.getSoundId();
-		// System.out.println("sound id: " + eventSoundId);
 	}
 	@Provides
 	BoltProcCounterConfig provideConfig(ConfigManager configManager)
