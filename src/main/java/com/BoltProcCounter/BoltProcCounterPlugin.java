@@ -87,6 +87,7 @@ public class BoltProcCounterPlugin extends Plugin
 	boolean needAccuracyPass = false;
 	boolean shouldLoad = true;
 	boolean shouldSave = false;
+	private String PlayerName = null;
 
 
 
@@ -179,11 +180,11 @@ public class BoltProcCounterPlugin extends Plugin
 	public void onGameTick(GameTick event)
 	{
 		Client client = this.client;
-		Player localPlayer = client.getLocalPlayer();
+		Player Player = client.getLocalPlayer();
 
-		if (localPlayer == null)
+		if (Player != null)
 		{
-			return;
+			PlayerName = Player.getName();
 		}
 
 		// only load data once. When "shouldLoad" is true and data saving is enabled
@@ -258,9 +259,9 @@ public class BoltProcCounterPlugin extends Plugin
 			if (isCrossbowEquipped())
 			{
 				// get players animation
-				if (localPlayer.getAnimation() == PlayingAnimationID)
+				if (Player.getAnimation() == PlayingAnimationID)
 				{
-					PlayingAnimationFrame = localPlayer.getAnimationFrame();
+					PlayingAnimationFrame = Player.getAnimationFrame();
 				}
 
 				// check if its correct attack animation
@@ -601,17 +602,15 @@ public class BoltProcCounterPlugin extends Plugin
 
 	private void saveToFile()
 	{
+		if (PlayerName == null)
+		{
+			return;
+		}
 		try
 		{
 			// normal data saving
-
-			Player player = client.getLocalPlayer();
-			if (player.getName() == null)
-			{
-				return;
-			}
 			// Get the directory path for the player's data
-			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
+			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",PlayerName));
 
 			// Check if the directory already exists
 			if (!Files.exists(pluginDirectory)) {
@@ -636,13 +635,15 @@ public class BoltProcCounterPlugin extends Plugin
 
 	private void saveDataSampleToFile()
 	{
+		if (PlayerName == null)
+		{
+			return;
+		}
 		try
 		{
 			// data sample saving
-			
-			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
-			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName()));
+			Path pluginDirectory = Files.createDirectories(Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",PlayerName));
 
 			// Check if the directory already exists
 			if (!Files.exists(pluginDirectory)) {
@@ -743,17 +744,20 @@ public class BoltProcCounterPlugin extends Plugin
 
 	private void loadFromFile()
 	{
+		if (PlayerName == null)
+		{
+			return;
+		}
 		// try to load 9 data points first, if it fails try to load old 8 data points
 		try
 		{
-			Player player = client.getLocalPlayer();
 			// Get the directory path for the player's data
 			// load all data that is tracked and make that the current counters
 
 			String loadedData;
 			for (int i = 0; i < ammoNames.length; i++)
 			{
-				Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName(),ammoNames[i] + ".txt");
+				Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",PlayerName,ammoNames[i] + ".txt");
 				if (Files.exists(dataDirectory))
 				{
 					loadedData = (new String(Files.readAllBytes(dataDirectory)));
@@ -777,7 +781,6 @@ public class BoltProcCounterPlugin extends Plugin
 				zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
 				attackDealtDmgArray[i] = Integer.parseInt(parts[8]);
 			}
-			log.info("9 data points loaded");
 
 		} catch (Exception e) {
 			log.error("Error loading 9 data points from file: " + e.getMessage());
@@ -785,14 +788,13 @@ public class BoltProcCounterPlugin extends Plugin
 			// try old save format of 8 data points
 			try
 			{
-				Player player = client.getLocalPlayer();
 				// Get the directory path for the player's data
 				// load all data that is tracked and make that the current counters
 
 				String loadedData;
 				for (int i = 0; i < ammoNames.length; i++)
 				{
-					Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",player.getName(),ammoNames[i] + ".txt");
+					Path dataDirectory = Paths.get(RUNELITE_DIR.getPath(),"bolt-proc-counter",PlayerName,ammoNames[i] + ".txt");
 					if (Files.exists(dataDirectory))
 					{
 						loadedData = (new String(Files.readAllBytes(dataDirectory)));
@@ -815,7 +817,6 @@ public class BoltProcCounterPlugin extends Plugin
 					zcbSpecsUsedArray[i] = Integer.parseInt(parts[6]);
 					zcbSpecsProcsArray[i] = Integer.parseInt(parts[7]);
 				}
-				log.info("8 data points loaded");
 
 			} catch (Exception ee) {
 				log.error("Error loading 8 data points from file: " + ee.getMessage());
