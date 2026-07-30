@@ -154,6 +154,42 @@ public class BoltProcCounterOverlay extends OverlayPanel
                             .right(String.valueOf(plugin.zcbSpecsProcsArray[plugin.wasAmmoIndex]))
                             .build());
                 }
+
+                if (config.RubyResetDebugOverlay())
+                {
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("----------")
+                            .build());
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Hide Quick-exit: ")
+                            .right(String.valueOf(plugin.shouldHideQuickExit))
+                            .build());
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Hide duration: ")
+                            .right(String.valueOf(plugin.HideQuickExitTimer))
+                            .build());
+                    if (plugin.EnterRegionTimer > 0)
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("In new region: ")
+                                .right("true")
+                                .build());
+                    }
+                    else
+                    {
+                        panelComponent.getChildren().add(LineComponent.builder()
+                                .left("In new region: ")
+                                .right("false")
+                                .build());
+                    }
+                    panelComponent.getChildren().add(LineComponent.builder()
+                            .left("Region duration: ")
+                            .right(String.valueOf(plugin.EnterRegionTimer))
+                            .build());
+
+                }
+
+
             }
             else
             {

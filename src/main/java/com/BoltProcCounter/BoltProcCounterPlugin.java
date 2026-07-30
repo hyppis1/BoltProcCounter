@@ -22,6 +22,7 @@ import net.runelite.api.events.FakeXpDrop;
 import java.text.DecimalFormat;
 import java.io.*;
 import java.nio.file.*;
+import java.util.Arrays;
 
 import static net.runelite.client.RuneLite.RUNELITE_DIR;
 
@@ -88,6 +89,10 @@ public class BoltProcCounterPlugin extends Plugin
 	boolean shouldLoad = true;
 	boolean shouldSave = false;
 	private String PlayerName = null;
+	boolean shouldHideQuickExit = false;
+	public int HideQuickExitTimer = 0;
+	public int LastRegion = -1;
+	public int EnterRegionTimer = 0;
 
 
 
@@ -249,6 +254,23 @@ public class BoltProcCounterPlugin extends Plugin
 			}
 		}
 
+		// Check if player is wanting to ruby reset. Then check if player is entering new regions
+		if (config.AssumeRubyResetting())
+		{
+			int Region = Player.getWorldLocation().getRegionID();
+
+			if (Region != LastRegion)
+			{
+				LastRegion = Region;
+
+				if (client.isInInstancedRegion())
+				{
+					// Timer when quick exit options can be hidden
+					EnterRegionTimer = config.AssumeRubyResettingTimer();
+				}
+			}
+		}
+
 		// do nothing if not equipped with bolts that have proc effects
 		if (ammoIndex != -1)
 		{
@@ -331,6 +353,23 @@ public class BoltProcCounterPlugin extends Plugin
 							}
 							// reset attacks since last ruby
 							attacksSinceLastProcArray[ammoIndex] = 0;
+
+							// Check if player wants to hide quick exit options when ruby resetting
+							if (eventSoundId == 2911 && config.HideQuickExit())
+							{
+								// Check if hiding should only happen when ruby resetting and check if timer allows hiding
+								if (config.AssumeRubyResetting() && EnterRegionTimer == 0)
+								{
+									// Do nothing
+								}
+								//If player doesn't care about hiding only when ruby resetting, or timer allows hiding, hide menu options
+								else
+								{
+									shouldHideQuickExit = true;
+									// Timer for how many ticks the menu options will be hidden
+									HideQuickExitTimer = config.HideQuickExitTimerTicks();
+								}
+							}
 
 						}
 					}
@@ -420,6 +459,35 @@ public class BoltProcCounterPlugin extends Plugin
 
 			// make hp xp drop false
 			HpXpDrop = false;
+
+			if (HideQuickExitTimer > 0)
+			{
+				HideQuickExitTimer--;
+			}
+			else
+			{
+				shouldHideQuickExit = false;
+			}
+
+			if (EnterRegionTimer > 0)
+			{
+				EnterRegionTimer--;
+			}
+		}
+	}
+
+	@Subscribe
+	public void onPostMenuSort(PostMenuSort event)
+	{
+		if (shouldHideQuickExit)
+		{
+			Menu menu = client.getMenu();
+
+			MenuEntry[] filtered = Arrays.stream(menu.getMenuEntries())
+					.filter(entry -> !entry.getOption().startsWith("Quick-"))
+					.toArray(MenuEntry[]::new);
+
+			menu.setMenuEntries(filtered);
 		}
 	}
 

@@ -330,10 +330,65 @@ public interface BoltProcCounterConfig extends Config
         return false;
     }
 
+    @ConfigSection(
+            name = "Ruby reset protection",
+            description = "Configurable settings to prevent accidental Quick-exits during ruby resets",
+            position = 10,
+            closedByDefault = true
+    )
+    String QuickHideSection = "QuickHide";
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 1,
+            keyName = "HideQuickExit",
+            name = "Hide Quick-exit on ruby proc",
+            description = "Hide Quick-exit and similar menu options after a natural ruby proc"
+    )
+    default boolean HideQuickExit() {return false;}
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 2,
+            keyName = "HideQuickExitTimerTicks",
+            name = "Hide duration",
+            description = "Number of ticks Quick-exit and similar menu options remain hidden after a natural ruby proc"
+    )
+    @Range(min = 1)
+    default int HideQuickExitTimerTicks() { return 5; }
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 3,
+            keyName = "AssumeRubyResetting",
+            name = "Only hide during ruby resets",
+            description = "Only hide Quick-exit and similar menu options during ruby resets."+
+                    "<br/>A ruby reset is assumed when entering a new instanced region."
+    )
+    default boolean AssumeRubyResetting() {return true;}
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 4,
+            keyName = "AssumeRubyResettingTimer",
+            name = "Ruby reset window",
+            description = "Number of ticks for which ruby resetting is assumed after entering a new instanced region"
+    )
+    @Range(min = 1)
+    default int AssumeRubyResettingTimer() { return 10; }
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 5,
+            keyName = "RubyResetDebugOverlay",
+            name = "Show debug on overlay",
+            description = "Show these settings in the overlay to debug your settings as you want"
+    )
+    default boolean RubyResetDebugOverlay() {return false;}
 
 
     @ConfigItem(
-            position = 10,
+            position = 11,
             keyName = "resetCounters",
             name = "Toggle to reset Counters",
             description = "Toggle to reset the counters for this bolt type. Resets also saved data on client closure"

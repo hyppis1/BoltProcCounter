@@ -4,6 +4,12 @@ This plugin tracks your attacks, procs and rate of bolts procs.
 There is options to separate Armadyl/Zaryte cross bow special attacks from the normal counter.
 You must have sounds enabled for the plugin to track ruby bolt procs.
 
+## Ruby Reset Protection
+
+Configurable settings to hide Quick-exit and similar menu options while ruby resetting.
+When enabled, Quick-exit and similar menu options are hidden for a user-defined number of ticks after a natural ruby proc.
+An optional setting restricts this behaviour to ruby resets by only hiding these menu options for a user-defined number of ticks after entering a new instanced region.
+
 ## Data saving
 
 Data is saved in .txt files with corresponding bolt name. For example Ruby.txt file contains data for ruby bolt tracking.
@@ -21,5 +27,6 @@ Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"bolt type
 
 ## Change log
 
-- 14.7 Updated plugin to work with quiver ammo slot. And added "attacks that hit" and overall accuracy tracking. Data saving includes "attacks that hit" as last item.
+- 14.7.2025 Updated plugin to work with quiver ammo slot. And added "attacks that hit" and overall accuracy tracking. Data saving includes "attacks that hit" as last item.
+- 30.7.2026 Added Ruby Reset Protection for the plugin. Configurable settings to hide Quick-exit like options when ruby resetting.
 
