@@ -350,6 +350,15 @@ public interface BoltProcCounterConfig extends Config
     @ConfigItem(
             section = QuickHideSection,
             position = 2,
+            keyName = "ConsumeQuickExit",
+            name = "Block right-click Quick-exit",
+            description = "Prevent Quick-exit and similar options from being clicked in already open menus after a natural ruby proc"
+    )
+    default boolean ConsumeQuickExit() {return false;}
+
+    @ConfigItem(
+            section = QuickHideSection,
+            position = 3,
             keyName = "HideQuickExitTimerTicks",
             name = "Hide duration",
             description = "Number of ticks Quick-exit and similar menu options remain hidden after a natural ruby proc"
@@ -359,7 +368,7 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = QuickHideSection,
-            position = 3,
+            position = 4,
             keyName = "AssumeRubyResetting",
             name = "Only hide during ruby resets",
             description = "Only hide Quick-exit and similar menu options during ruby resets."+
@@ -369,7 +378,7 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = QuickHideSection,
-            position = 4,
+            position = 5,
             keyName = "AssumeRubyResettingTimer",
             name = "Ruby reset window",
             description = "Number of ticks for which ruby resetting is assumed after entering a new instanced region"
@@ -379,7 +388,7 @@ public interface BoltProcCounterConfig extends Config
 
     @ConfigItem(
             section = QuickHideSection,
-            position = 5,
+            position = 6,
             keyName = "RubyResetDebugOverlay",
             name = "Show debug on overlay",
             description = "Show these settings in the overlay to debug your settings as you want"

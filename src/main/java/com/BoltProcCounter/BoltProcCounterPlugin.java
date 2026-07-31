@@ -368,6 +368,7 @@ public class BoltProcCounterPlugin extends Plugin
 									shouldHideQuickExit = true;
 									// Timer for how many ticks the menu options will be hidden
 									HideQuickExitTimer = config.HideQuickExitTimerTicks();
+
 								}
 							}
 
@@ -491,6 +492,18 @@ public class BoltProcCounterPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		// Mainly a backup to block quick exit, if right click menu was already open before ruby proc
+		if (shouldHideQuickExit && config.ConsumeQuickExit())
+		{
+			if (event.getMenuOption().startsWith("Quick-"))
+			{
+				event.consume();
+			}
+		}
+	}
 
 	private boolean isCrossbowEquipped()
 	{
