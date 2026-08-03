@@ -93,6 +93,7 @@ public class BoltProcCounterPlugin extends Plugin
 	public int HideQuickExitTimer = 0;
 	public int LastRegion = -1;
 	public int EnterRegionTimer = 0;
+	private int lastHpXp = -1;
 
 
 
@@ -925,7 +926,14 @@ public class BoltProcCounterPlugin extends Plugin
 		// check if skill is hp
 		if (event.getSkill() == Skill.HITPOINTS)
 		{
-			HpXpDrop = true;
+			int currentXp = event.getXp();
+
+			if (lastHpXp != -1 && currentXp > lastHpXp)
+			{
+				HpXpDrop = true;
+			}
+
+			lastHpXp = currentXp;
 		}
 	}
 	@Subscribe

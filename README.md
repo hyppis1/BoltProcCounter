@@ -7,7 +7,10 @@ You must have sounds enabled for the plugin to track ruby bolt procs.
 ## Ruby Reset Protection
 
 Configurable settings to hide Quick-exit and similar menu options while ruby resetting.
+
 When enabled, Quick-exit and similar menu options are hidden for a user-defined number of ticks after a natural ruby proc.
+Can also choose to prevent Quick-exit and similar options from being clicked in already open menus after a natural ruby proc
+
 An optional setting restricts this behaviour to ruby resets by only hiding these menu options for a user-defined number of ticks after entering a new instanced region.
 
 ## Data saving
