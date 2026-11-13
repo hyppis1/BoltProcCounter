@@ -32,4 +32,4 @@ Save location: %USERPROFILE%/.runelite/bolt-proc-counter/%INGAMENAME%/"bolt type
 
 - 14.7.2025 Updated plugin to work with quiver ammo slot. And added "attacks that hit" and overall accuracy tracking. Data saving includes "attacks that hit" as last item.
 - 30.7.2026 Added Ruby Reset Protection for the plugin. Configurable settings to hide Quick-exit like options when ruby resetting.
-
+- 13.11.2026 Updated plugin to track ascension bolts.

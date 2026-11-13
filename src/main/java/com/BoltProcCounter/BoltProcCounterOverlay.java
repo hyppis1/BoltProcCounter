@@ -42,12 +42,12 @@ public class BoltProcCounterOverlay extends OverlayPanel
             {
                 if (config.ShowBoltName())
                 {
-                    double formatedRate = plugin.expectedRate;
+                    double formatedRate = plugin.WasexpectedRate;
                     formatedRate *= 100.0;
                     formatedRate = Double.parseDouble(new DecimalFormat("#.##").format(formatedRate));
 
                     panelComponent.getChildren().add(LineComponent.builder()
-                            .left(plugin.ammoName)
+                            .left(plugin.ammoNames[plugin.wasAmmoIndex])
                             .right(formatedRate + "%")
                             .build());
 

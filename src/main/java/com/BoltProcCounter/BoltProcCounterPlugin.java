@@ -3,6 +3,7 @@ package com.BoltProcCounter;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 
+import com.sun.tools.javac.Main;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
@@ -49,30 +50,32 @@ public class BoltProcCounterPlugin extends Plugin
 
 
 
-	public int[] attackCounterArray = new int[10]; // Counters to track attacks
-	public int[] attacksSinceLastProcArray = new int[10]; // Counters to track attacks since last procs
-	public int[] longestDryStreakArray = new int[10]; // Counters to track dry streaks
-	public int[] procCounterArray = new int[10]; // Counters to track bolt procs
-	public int[] acbSpecsUsedArray = new int[10]; // counters to track acb spec uses
-	public int[] acbSpecsProcsArray = new int[10]; // counters to track acb spec procs
-	public int[] zcbSpecsUsedArray = new int[10]; // counters to track zcb spec uses
-	public int[] zcbSpecsProcsArray = new int[10]; // counters to track zcb spec procs
-	public int[] attackDealtDmgArray = new int[10]; // counters to track hits that dealt dmg
+	public int[] attackCounterArray = new int[12]; // Counters to track attacks
+	public int[] attacksSinceLastProcArray = new int[12]; // Counters to track attacks since last procs
+	public int[] longestDryStreakArray = new int[12]; // Counters to track dry streaks
+	public int[] procCounterArray = new int[12]; // Counters to track bolt procs
+	public int[] acbSpecsUsedArray = new int[12]; // counters to track acb spec uses
+	public int[] acbSpecsProcsArray = new int[12]; // counters to track acb spec procs
+	public int[] zcbSpecsUsedArray = new int[12]; // counters to track zcb spec uses
+	public int[] zcbSpecsProcsArray = new int[12]; // counters to track zcb spec procs
+	public int[] attackDealtDmgArray = new int[12]; // counters to track hits that dealt dmg
 
 	public double overallAccuracy;
 	public double procDryRate = 0.0; // Counter to track proc dryness chance
 	public double rate = 0.0;
 	public double expectedProcs = 0.0; // Counter to track expected  procs
 	public double expectedRate;
+	public double WasexpectedRate;
 	private int eventSoundId;
 	private int boltProcSoundId;
 	private int weaponId;
-	private int ammoId;
+	private int MainAmmoId;
+	private int QuiverAmmoId;
 	private int capeId;
 
 	public String ammoName;
 
-	public String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx"};
+	public String[] ammoNames = {"Opal","Jade","Pearl","Topaz","Sapphire","Emerald","Ruby","Diamond","Dragonstone","Onyx","Diamond Asc","Onyx Asc"};
 	public int ammoIndex;
 	public int wasAmmoIndex = -1;
 	public int PlayingAnimationID;
@@ -188,10 +191,12 @@ public class BoltProcCounterPlugin extends Plugin
 		Client client = this.client;
 		Player Player = client.getLocalPlayer();
 
-		if (Player != null)
+		if (Player == null)
 		{
-			PlayerName = Player.getName();
+			return;
 		}
+
+		PlayerName = Player.getName();
 
 		// only load data once. When "shouldLoad" is true and data saving is enabled
 		if (shouldLoad && config.dataSaving())
@@ -204,7 +209,7 @@ public class BoltProcCounterPlugin extends Plugin
 		// "shouldSave" turns true after data loading has happened/game tick has passed.
 		shouldSave = true;
 
-		// get currently equipped weapon and ammo id
+		// get currently equipped weapon, cape, and ammo id
 		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
 		if (equipment != null)
 		{
@@ -223,11 +228,11 @@ public class BoltProcCounterPlugin extends Plugin
 			slotItem = equipment.getItem(SlotIdx);
 			if (slotItem != null)
 			{
-				ammoId = slotItem.getId();
+				MainAmmoId = slotItem.getId();
 			}
 			else
 			{
-				ammoId = -1;
+				MainAmmoId = -1;
 			}
 
 			SlotIdx = EquipmentInventorySlot.CAPE.getSlotIdx();
@@ -242,18 +247,59 @@ public class BoltProcCounterPlugin extends Plugin
 			}
 		}
 
-		ammoIndex = ammoIdToArrayIndex();
-
-		// if no ammo was found, check if player has quiver equipped
-		if (ammoIndex == -1)
+		// check quiver ammo
+		if (isQuiverEquipped())
 		{
-			if (isQuiverEquipped())
+			// quiver ammo slot ammo id
+			QuiverAmmoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
+		}
+		// if no quiver, then quiver ammo -1
+		else
+		{
+			QuiverAmmoId = -1;
+		}
+
+		// check if using ascension crossbows
+		if (weaponId == net.runelite.api.gameval.ItemID.ASCENSION_CROSSBOWS)
+		{
+			// check if using ascension crossbow ammo in main slot
+			ammoIndex = ammoIdToArrayIndex(MainAmmoId);
+			if (ammoIndex == 10 || ammoIndex == 11)
 			{
-				// quiver ammo slot ammo id
-				ammoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
-				ammoIndex = ammoIdToArrayIndex();
+				// all good, correct weapon correct ammo
+			}
+			else
+			{
+				// check if using ascension crossbow ammo in quiver slot
+				ammoIndex = ammoIdToArrayIndex(QuiverAmmoId);
+				if (ammoIndex == 10 || ammoIndex == 11)
+				{
+					// all good, correct weapon correct ammo
+				}
+				else
+				{
+					// No ascension ammo for ascension crossbow, force -1
+					ammoIndex = -1;
+				}
 			}
 		}
+		// check that ascension ammo is not tracked to other crossbows
+		else
+		{
+			// check if using ascension ammo in main slot, or overall if no valid ammo was found
+			ammoIndex = ammoIdToArrayIndex(MainAmmoId);
+			if (ammoIndex == 10 || ammoIndex == 11 || ammoIndex == -1)
+			{
+				// main slot using ascension ammo or no valid ammo, check quiver slot for ammo
+				ammoIndex = ammoIdToArrayIndex(QuiverAmmoId);
+				if (ammoIndex == 10 || ammoIndex == 11)
+				{
+					// quiver slot using ascension ammo, force -1
+					ammoIndex = -1;
+				}
+			}
+		}
+
 
 		// Check if player is wanting to ruby reset. Then check if player is entering new regions
 		if (config.AssumeRubyResetting())
@@ -277,6 +323,7 @@ public class BoltProcCounterPlugin extends Plugin
 		{
 			// for overlay data to stay visible when equipping something else, stops flickering when swapping between bolts and arrows etc
 			wasAmmoIndex = ammoIndex;
+			WasexpectedRate = expectedRate;
 
 			// check if crossbow is equipped
 			if (isCrossbowEquipped())
@@ -395,12 +442,6 @@ public class BoltProcCounterPlugin extends Plugin
 				}
 			}
 
-			// 10% bonus from kandarin hard diary
-			if (config.KandarinHardDiary())
-			{
-				expectedRate *= 1.1;
-			}
-
 			// calculate proc rates etc. depending on config setting
 			if (config.AccuracyPassRule())
 			{
@@ -510,6 +551,7 @@ public class BoltProcCounterPlugin extends Plugin
 	{
 		// Basicly check if any crossbow is equipped
 		return weaponId == net.runelite.api.gameval.ItemID.ZARYTE_XBOW
+				|| weaponId == net.runelite.api.gameval.ItemID.ASCENSION_CROSSBOWS
 				|| weaponId == net.runelite.api.gameval.ItemID.ACB
 				|| weaponId == net.runelite.api.gameval.ItemID.DRAGONHUNTER_XBOW
 				|| weaponId == net.runelite.api.gameval.ItemID.DRAGONHUNTER_XBOW_KBD
@@ -539,16 +581,23 @@ public class BoltProcCounterPlugin extends Plugin
 				|| capeId == net.runelite.api.gameval.ItemID.DIZANAS_QUIVER_UNCHARGED_TROUVER;
 	}
 
-	private int ammoIdToArrayIndex()
+	private int ammoIdToArrayIndex(int AmmoId)
 	{
+		// 10% bonus from kandarin hard diary
+		double DiaryBoost = 1;
+		if (config.KandarinHardDiary())
+		{
+			DiaryBoost = 1.1;
+		}
+
 		int arrayIndex;
-		switch (ammoId)
+		switch (AmmoId)
 		{
 			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_BRONZE_TIPPED_OPAL_ENCHANTED:
 			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_OPAL:
 			case net.runelite.api.gameval.ItemID.BR_DRAGON_BOLTS_ENCHANTED_OPAL:
 				arrayIndex = 0;
-				expectedRate = 0.05; // same rate both pvm and pvp
+				expectedRate = 0.05 * DiaryBoost; // same rate both pvm and pvp
 				boltProcSoundId = 2918;
 				ammoName = "Opal";
 				needAccuracyPass = false;
@@ -556,7 +605,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_BLURITE_TIPPED_JADE_ENCHANTED:
 			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_JADE:
 				arrayIndex = 1;
-				expectedRate = 0.06; // same rate both pvm and pvp and nobody will ever use these
+				expectedRate = 0.06 * DiaryBoost; // same rate both pvm and pvp and nobody will ever use these
 				boltProcSoundId = 2916;
 				ammoName = "Jade";
 				needAccuracyPass = false;
@@ -564,7 +613,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_IRON_TIPPED_PEARL_ENCHANTED:
 			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_PEARL:
 				arrayIndex = 2;
-				expectedRate = 0.06; // same rate both pvm and pvp
+				expectedRate = 0.06 * DiaryBoost; // same rate both pvm and pvp
 				boltProcSoundId = 2920;
 				ammoName = "Pearl";
 				needAccuracyPass = false;
@@ -574,11 +623,11 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 3;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.04;
+					expectedRate = 0.04 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.0;
+					expectedRate = 0.0 * DiaryBoost;
 				}
 				boltProcSoundId = 2914;
 				ammoName = "Topaz";
@@ -589,11 +638,11 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 4;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.05;
+					expectedRate = 0.05 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.25;
+					expectedRate = 0.25 * DiaryBoost;
 				}
 				boltProcSoundId = 2912;
 				ammoName = "Sapphire";
@@ -604,11 +653,11 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 5;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.54;
+					expectedRate = 0.54 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.55;
+					expectedRate = 0.55 * DiaryBoost;
 				}
 				boltProcSoundId = 2919;
 				ammoName = "Emerald";
@@ -619,11 +668,11 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 6;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.11;
+					expectedRate = 0.11 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.06;
+					expectedRate = 0.06 * DiaryBoost;
 				}
 				boltProcSoundId = 2911;
 				ammoName = "Ruby";
@@ -635,11 +684,11 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 7;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.05;
+					expectedRate = 0.05 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.1;
+					expectedRate = 0.1 * DiaryBoost;
 				}
 				boltProcSoundId = 2913;
 				ammoName = "Diamond";
@@ -648,7 +697,7 @@ public class BoltProcCounterPlugin extends Plugin
 			case net.runelite.api.gameval.ItemID.XBOWS_CROSSBOW_BOLTS_RUNITE_TIPPED_DRAGONSTONE_ENCHANTED:
 			case net.runelite.api.gameval.ItemID.DRAGON_BOLTS_ENCHANTED_DRAGONSTONE:
 				arrayIndex = 8;
-				expectedRate = 0.06; // same rate both pvm and pvp
+				expectedRate = 0.06 * DiaryBoost; // same rate both pvm and pvp
 				boltProcSoundId = 2915;
 				ammoName = "Dragonstone";
 				needAccuracyPass = true;
@@ -658,14 +707,50 @@ public class BoltProcCounterPlugin extends Plugin
 				arrayIndex = 9;
 				if (config.pvpRates())
 				{
-					expectedRate = 0.1;
+					expectedRate = 0.1 * DiaryBoost;
 				}
 				else
 				{
-					expectedRate = 0.11;
+					expectedRate = 0.11 * DiaryBoost;
 				}
 				boltProcSoundId = 2917;
 				ammoName = "Onyx";
+				needAccuracyPass = true;
+				break;
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_DIAMOND_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_DIAMOND_ENCHANTED_2:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_DIAMOND_ENCHANTED_3:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_DIAMOND_ENCHANTED_4:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_DIAMOND_ENCHANTED_5:
+				arrayIndex = 10;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.025 * DiaryBoost;
+				}
+				else
+				{
+					expectedRate = 0.05 * DiaryBoost;
+				}
+				boltProcSoundId = 2913;
+				ammoName = "Diamond Asc";
+				needAccuracyPass = false;
+				break;
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_ONYX_ENCHANTED:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_ONYX_ENCHANTED_2:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_ONYX_ENCHANTED_3:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_ONYX_ENCHANTED_4:
+			case net.runelite.api.gameval.ItemID.ASCENSION_BOLTS_ONYX_ENCHANTED_5:
+				arrayIndex = 11;
+				if (config.pvpRates())
+				{
+					expectedRate = 0.05 * DiaryBoost;
+				}
+				else
+				{
+					expectedRate = 0.055 * DiaryBoost;
+				}
+				boltProcSoundId = 12647;
+				ammoName = "Onyx Asc";
 				needAccuracyPass = true;
 				break;
 			default:
@@ -677,9 +762,13 @@ public class BoltProcCounterPlugin extends Plugin
 	private boolean isAttackAnimation(int animationId)
 	{
 		// Check if the animation ID matches any of the specified attack animations
-		// 7552 rcb,dcb,dhcb and acb attack, 9168 zcb attack, 9206 ornament rcb attack
-		// 4230 rcb in pvp, 9205 ornament rcb attack in pvp, 9166 zcb attack in pvp
-		return animationId == 7552 || animationId == 9168 || animationId == 9206 || animationId == 4230 || animationId == 9205 || animationId == 9166;
+		return animationId == 7552 ||  // 7552 rcb,dcb,dhcb and acb attack
+				animationId == 9168 || // 9168 zcb attack
+				animationId == 9206 || // 9206 ornament rcb attack
+				animationId == 4230 || // 4230 rcb in pvp
+				animationId == 9205 || // 9205 ornament rcb in pvp
+				animationId == 9166 || // 9166 zcb in pvp
+				animationId == 15114 || animationId == 15116; // 15114 and 15116 ascension crossbows
 	}
 
 	private void saveToFile()
